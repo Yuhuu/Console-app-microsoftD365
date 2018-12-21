@@ -16,11 +16,12 @@ namespace LeadProcess
     {
 
 
-    /*
-      *As all  know, we need to track, update, and track some more.So while you update your lead. be sure that you have chosen the 
-      * right one to update.
-      **/
-    public static void Run(OrganizationServiceProxy service)
+        /*
+          * Retrieve all accounts owned by the user with read access rights to the accounts 
+          * and the name contains customer
+          * then it is printed out in Debug output.
+          **/
+        public static void Run(OrganizationServiceProxy service)
     {
 
             // Retrieve all accounts owned by the user with read access rights to the accounts and   
@@ -44,7 +45,6 @@ namespace LeadProcess
             foreach (var c in result.Entities)
             {
                 Debug.WriteLine(c.Attributes["name"].ToString());
-                System.Console.WriteLine(c.Attributes["name"]);
             }
         }
 
