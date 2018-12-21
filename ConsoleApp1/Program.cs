@@ -24,7 +24,7 @@ namespace LeadProcess
         private const string leadSourceName = "Autolease";
         private const string companyName = "vicky 65n from Code";
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             var credentials = CredentialCache.DefaultNetworkCredentials;
             var clientCredentials = new ClientCredentials();
@@ -33,8 +33,11 @@ namespace LeadProcess
             var service = new OrganizationServiceProxy(new Uri("https://intmscrmtst.sectoralarm.net/SectorAlarmfrtstPLAYGROUND/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
 
             Guid id = CreateLeadWithName(service, companyName);
-            UpdateLead(service,id);
-            QualifyLead(service,id);
+            //UpdateLead(service,id);
+            //QualifyLead(service,id);
+            ProgramFetchQuery.Run(service);
+
+
         }
 
         private static Entity GetLeadSourceName(OrganizationServiceProxy service, String value)
