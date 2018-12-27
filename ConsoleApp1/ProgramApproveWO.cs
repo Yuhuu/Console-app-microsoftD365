@@ -49,20 +49,19 @@ namespace LeadProcess
         private static Guid CreateWO(OrganizationServiceProxy service, String name)
         {
 
-            var createEntity = new Entity("log_workorders")
+            var createEntity = new Entity("log_workorders");
             createEntity["log_name"] = name;
-
-            var account = GetAccount(service);
-            newLead["companyname"] = name;
-            newLead["log_leadsourceid"] = leadSource.ToEntityReference();
-            newLead["ownerid"] = user.ToEntityReference();
-            return service.Create(newLead);
+            createEntity["log_accountid"] = GetAccount(service).ToEntityReference();
+            createEntity["log_contractid"] = GetContract(service).ToEntityReference();
+            createEntity["log_installationid"] = GetInstallation(service).ToEntityReference();
+            return service.Create(createEntity);
+            //return null;
         }
 
         private static Entity GetAccount(OrganizationServiceProxy service)
         {
             var query = new QueryExpression("account");
-            query.Criteria.AddCondition("name", ConditionOperator.Equal, "vicky 65n from Code");
+            query.Criteria.AddCondition("name", ConditionOperator.Equal, "LeadProcess.companyName");
             var resultLise = service.RetrieveMultiple(query);
 
             if (resultLise.Entities.Count == 0)
@@ -75,7 +74,7 @@ namespace LeadProcess
         private static Entity GetContract(OrganizationServiceProxy service)
         {
             var query = new QueryExpression("log_contract");
-            query.Criteria.AddCondition("log_name", ConditionOperator.Equal, "vicky 65n from Code");
+            query.Criteria.AddCondition("log_name", ConditionOperator.Equal, "K-NOR-000011604");
             var resultLise = service.RetrieveMultiple(query);
 
             if (resultLise.Entities.Count == 0)
@@ -84,5 +83,19 @@ namespace LeadProcess
             return user;
 
         }
+
+        private static Entity GetInstallation(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression("log_installation");
+            query.Criteria.AddCondition("log_hardwareid", ConditionOperator.Equal, "Installation: vicky 68n from Code");
+            var resultLise = service.RetrieveMultiple(query);
+
+            if (resultLise.Entities.Count == 0)
+                throw new Exception("Entity Not found");
+            var user = resultLise.Entities.FirstOrDefault();
+            return user;
+
+        }
+
     }
 }
