@@ -50,7 +50,7 @@ namespace LeadProcess
           **/
         private static Guid CreateWO(OrganizationServiceProxy service, String name)
         {
-
+            //log_approvedforinvoicen ? why not this one
             var createEntity = new Entity("log_workorders");
             createEntity["log_name"] = name;
             createEntity["log_accountid"] = GetAccount(service).ToEntityReference();
@@ -107,6 +107,9 @@ namespace LeadProcess
             //add actual installer
             updateWO["log_employeeid"] = GetInstallerPerson(service).ToEntityReference();
         
+            service.Update(updateWO);
+            updateWO["log_statecode"] = new OptionSetValue(1);
+            updateWO["log_statuscode"] = new OptionSetValue(2);
             service.Update(updateWO);
         }
 
