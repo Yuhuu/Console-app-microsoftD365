@@ -32,9 +32,10 @@ namespace LeadProcess
             clientCredentials.UserName.Password = credentials.Password;
             var service = new OrganizationServiceProxy(new Uri("https://intmscrmtst.sectoralarm.net/SectorAlarmfrtstPLAYGROUND/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
 
-            Guid id = CreateLeadWithName(service, companyName);
-            UpdateLead(service, id);
-            QualifyLead(service, id);
+            //Guid id = CreateLeadWithName(service, companyName);
+            //UpdateLead(service, id);
+            //QualifyLead(service, id);
+            ProgramApproveWO.Run(service);
             //ProgramFetchQuery.Run(service);
 
 

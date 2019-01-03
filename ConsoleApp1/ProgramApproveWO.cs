@@ -16,9 +16,7 @@ namespace LeadProcess
     {
 
 
-        /*
-         * 
-          **/
+        public const string accountName = "Company 68n from Code";
         public static void Run(OrganizationServiceProxy service)
     {
 
@@ -46,6 +44,10 @@ namespace LeadProcess
             }
 
         }
+        /*
+         * Once we have approved the Work order we cannot add more Work Order Products. If the status is Open we can add as many work orders as we need.
+         * 
+          **/
         private static Guid CreateWO(OrganizationServiceProxy service, String name)
         {
 
@@ -55,13 +57,12 @@ namespace LeadProcess
             createEntity["log_contractid"] = GetContract(service).ToEntityReference();
             createEntity["log_installationid"] = GetInstallation(service).ToEntityReference();
             return service.Create(createEntity);
-            //return null;
         }
 
         private static Entity GetAccount(OrganizationServiceProxy service)
         {
             var query = new QueryExpression("account");
-            query.Criteria.AddCondition("name", ConditionOperator.Equal, "LeadProcess.companyName");
+            query.Criteria.AddCondition("name", ConditionOperator.Equal, accountName);
             var resultLise = service.RetrieveMultiple(query);
 
             if (resultLise.Entities.Count == 0)
@@ -88,6 +89,32 @@ namespace LeadProcess
         {
             var query = new QueryExpression("log_installation");
             query.Criteria.AddCondition("log_hardwareid", ConditionOperator.Equal, "Installation: vicky 68n from Code");
+            var resultLise = service.RetrieveMultiple(query);
+
+            if (resultLise.Entities.Count == 0)
+                throw new Exception("Entity Not found");
+            var user = resultLise.Entities.FirstOrDefault();
+            return user;
+
+        }
+        private static void ApproveWO(OrganizationServiceProxy service, Guid workorderID)
+        {
+
+            var updateWO = new Entity("log_workorders");
+            updateWO["log_workorderid"] = workorderID;
+            updateWO["log_actualend"] = DateTime.Now;
+            updateWO["log_sectormobilestatus"] = new OptionSetValue(182400006);
+            //add actual installer
+            updateWO["log_employeeid"] = GetInstallerPerson(service).ToEntityReference();
+        
+            service.Update(updateWO);
+        }
+
+        //Get sales person which number is "GS-80064"
+        private static Entity GetInstallerPerson(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression("log_employee");
+            query.Criteria.AddCondition("log_employeenumber", ConditionOperator.Equal, "GS-80064");
             var resultLise = service.RetrieveMultiple(query);
 
             if (resultLise.Entities.Count == 0)
