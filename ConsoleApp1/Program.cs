@@ -22,7 +22,7 @@ namespace LeadProcess
         
         private const string currency = "NOK";
         private const string leadSourceName = "Autolease";
-        public const string companyName = "vicky 68n from Code";
+        public const string companyName = "Company 69n from Code";
 
         public static void Main(string[] args)
         {
@@ -32,9 +32,9 @@ namespace LeadProcess
             clientCredentials.UserName.Password = credentials.Password;
             var service = new OrganizationServiceProxy(new Uri("https://intmscrmtst.sectoralarm.net/SectorAlarmfrtstPLAYGROUND/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
 
-            //Guid id = CreateLeadWithName(service, companyName);
-            //UpdateLead(service, id);
-            //QualifyLead(service, id);
+            Guid id = CreateLeadWithName(service, companyName);
+            UpdateLead(service, id);
+            QualifyLead(service, id);
             ProgramApproveWO.Run(service);
             //ProgramFetchQuery.Run(service);
 
@@ -157,7 +157,7 @@ namespace LeadProcess
             entity["log_postalcode"] = GetPostCode(service).ToEntityReference();
             entity["address1_line1"] = "address1 vitaminveien 1, oslo";
             entity["log_canoverwritecreditcheck"] = true;
-            //service.Update(entity);
+            service.Update(entity);
 
             var createEntity = new Entity("log_workorderproduct");
                 createEntity["log_leadid"] = new EntityReference("lead", id);

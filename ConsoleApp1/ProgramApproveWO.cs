@@ -88,7 +88,7 @@ namespace LeadProcess
             updateWO["log_employeeid"] = GetInstallerPerson(service).ToEntityReference();
         
             service.Update(updateWO);
-        //state settes til inactive and status set to 
+        //State settes til inactive and status set to 
         //Value: 182400002, Label: Scheduled
         //Value: 1, Label: Open
         //Value: 2, Label: Approved
