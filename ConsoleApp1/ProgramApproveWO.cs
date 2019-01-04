@@ -16,32 +16,12 @@ namespace LeadProcess
     {
 
 
-        public const string accountName = "Company 68n from Code";
+        public const string accountName = "Company 69n from Code";
         public static void Run(OrganizationServiceProxy service)
     {
 
-            // Retrieve all accounts owned by the user with read access rights to the accounts and   
-            // where the last name of the user is not Cannon.   
-            string fetch = @"  
-                <fetch mapping='logical'>
-                <entity name = 'account'>
-                <attribute name='name'/>
-                <attribute name = 'primarycontactid' />
-                <attribute name='log_dateofbirth'/>
-                <attribute name = 'telephone1' />
-                <attribute name='accountid'/>
-                <order descending = 'false' attribute='name'/>
-                <filter type = 'and' >
-                <condition attribute='name' value='%Customer%' operator='like'/>
-                </filter>
-                </entity>
-                </fetch> ";
-
-            EntityCollection result = service.RetrieveMultiple(new FetchExpression(fetch));
-            foreach (var c in result.Entities)
-            {
-                Debug.WriteLine(c.Attributes["name"].ToString());
-            }
+            Guid id = CreateWO(service, accountName);
+            ApproveWO(service,  id);
 
         }
         /*
@@ -101,15 +81,21 @@ namespace LeadProcess
         {
 
             var updateWO = new Entity("log_workorders");
-            updateWO["log_workorderid"] = workorderID;
+            updateWO["log_workordersid"] = workorderID;
             updateWO["log_actualend"] = DateTime.Now;
             updateWO["log_sectormobilestatus"] = new OptionSetValue(182400006);
             //add actual installer
             updateWO["log_employeeid"] = GetInstallerPerson(service).ToEntityReference();
         
             service.Update(updateWO);
-            updateWO["log_statecode"] = new OptionSetValue(1);
-            updateWO["log_statuscode"] = new OptionSetValue(2);
+        //state settes til inactive and status set to 
+        //Value: 182400002, Label: Scheduled
+        //Value: 1, Label: Open
+        //Value: 2, Label: Approved
+        //Value: 182400000, Label: Cancelled
+        //Value: 182400001, Label: No - show
+            updateWO["statecode"] = new OptionSetValue(1);
+            updateWO["statuscode"] = new OptionSetValue(2);
 
             service.Update(updateWO);
         }
