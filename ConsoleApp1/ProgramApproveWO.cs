@@ -110,6 +110,7 @@ namespace LeadProcess
             service.Update(updateWO);
             updateWO["log_statecode"] = new OptionSetValue(1);
             updateWO["log_statuscode"] = new OptionSetValue(2);
+
             service.Update(updateWO);
         }
 
