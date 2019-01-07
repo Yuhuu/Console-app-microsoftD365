@@ -22,7 +22,7 @@ namespace LeadProcess
         
         private const string currency = "NOK";
         private const string leadSourceName = "Autolease";
-        public const string companyName = "Company 74n from Code";
+        public const string companyName = "Company 77n from Code";
 
         public static void Main(string[] args)
         {

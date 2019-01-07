@@ -21,7 +21,8 @@ namespace LeadProcess
     {
 
             Guid id = CreateWO(service, accountName);
-            AddProductsToWO(service, id);
+            AddProductWithTypeHardware(service, id);
+            AddProductWithTypeContract(service, id);
             ApproveWO(service,  id);
 
         }
@@ -79,25 +80,32 @@ namespace LeadProcess
 
         }
 
-        private static Entity GetProduct(OrganizationServiceProxy service)
+        private static Entity GetProduct(OrganizationServiceProxy service, String productnumber)
         {
             var query = new QueryExpression("product");
-            query.Criteria.AddCondition("productnumber", ConditionOperator.Equal, "90001");
+            query.Criteria.AddCondition("productnumber", ConditionOperator.Equal, productnumber);
             var resultLise = service.RetrieveMultiple(query);
 
             if (resultLise.Entities.Count == 0)
                 throw new Exception("Entity Not found");
             var product = resultLise.Entities.FirstOrDefault();
             return product;
-
         }
 
         //Add two different work order products.One of type subscription, and one of type hardware.
-        private static void AddProductsToWO(OrganizationServiceProxy service, Guid workorderID)
+        private static void AddProductWithTypeHardware(OrganizationServiceProxy service, Guid workorderID)
         {
             var createEntity = new Entity("log_workorderproduct");
             createEntity["log_workordersid"] = new EntityReference("log_workorders", workorderID);
-            createEntity["log_hardwareproductid"] = GetProduct(service).ToEntityReference();
+            createEntity["log_hardwareproductid"] = GetProduct(service, "90001").ToEntityReference();
+            service.Create(createEntity);
+        }
+
+        private static void AddProductWithTypeContract(OrganizationServiceProxy service, Guid workorderID)
+        {
+            var createEntity = new Entity("log_workorderproduct");
+            createEntity["log_workordersid"] = new EntityReference("log_workorders", workorderID);
+            createEntity["log_hardwareproductid"] = GetProduct(service, "20041").ToEntityReference();
             service.Create(createEntity);
         }
         private static void ApproveWO(OrganizationServiceProxy service, Guid workorderID)
