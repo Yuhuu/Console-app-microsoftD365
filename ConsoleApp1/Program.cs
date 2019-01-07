@@ -22,7 +22,7 @@ namespace LeadProcess
         
         private const string currency = "NOK";
         private const string leadSourceName = "Autolease";
-        public const string companyName = "Company 70n from Code";
+        public const string companyName = "Company 74n from Code";
 
         public static void Main(string[] args)
         {
@@ -35,9 +35,8 @@ namespace LeadProcess
             Guid id = CreateLeadWithName(service, companyName);
             UpdateLead(service, id);
             QualifyLead(service, id);
-            //ProgramApproveWO.Run(service);
             //ProgramFetchQuery.Run(service);
-
+            ProgramApproveWO.Run(service);
 
         }
 
@@ -164,9 +163,9 @@ namespace LeadProcess
                     service.Create(createEntity);
 
                 Debug.WriteLine(entity.ToString());
-                //entity["log_convertleadflag"] = 1;
+            entity["log_convertleadflag"] = 1;
 
-                service.Update(entity);
+            service.Update(entity);
                 Debug.WriteLine(entity.ToString());
             
         }

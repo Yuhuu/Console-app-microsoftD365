@@ -16,11 +16,12 @@ namespace LeadProcess
     {
 
 
-        public const string accountName = "Company 69n from Code";
+        public const string accountName = LeadProcess.companyName;
         public static void Run(OrganizationServiceProxy service)
     {
 
             Guid id = CreateWO(service, accountName);
+            AddProductsToWO(service, id);
             ApproveWO(service,  id);
 
         }
@@ -78,16 +79,26 @@ namespace LeadProcess
 
         }
 
+        private static Entity GetProduct(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression("product");
+            query.Criteria.AddCondition("productnumber", ConditionOperator.Equal, "90001");
+            var resultLise = service.RetrieveMultiple(query);
+
+            if (resultLise.Entities.Count == 0)
+                throw new Exception("Entity Not found");
+            var product = resultLise.Entities.FirstOrDefault();
+            return product;
+
+        }
+
         //Add two different work order products.One of type subscription, and one of type hardware.
         private static void AddProductsToWO(OrganizationServiceProxy service, Guid workorderID)
         {
             var createEntity = new Entity("log_workorderproduct");
             createEntity["log_workordersid"] = new EntityReference("log_workorders", workorderID);
+            createEntity["log_hardwareproductid"] = GetProduct(service).ToEntityReference();
             service.Create(createEntity);
-            var updateWO = new Entity("log_workorders");
-            updateWO["statuscode"] = new OptionSetValue(2);
-
-            service.Update(updateWO);
         }
         private static void ApproveWO(OrganizationServiceProxy service, Guid workorderID)
         {
