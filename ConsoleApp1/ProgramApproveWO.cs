@@ -77,6 +77,18 @@ namespace LeadProcess
             return user;
 
         }
+
+        //Add two different work order products.One of type subscription, and one of type hardware.
+        private static void AddProductsToWO(OrganizationServiceProxy service, Guid workorderID)
+        {
+            var createEntity = new Entity("log_workorderproduct");
+            createEntity["log_workordersid"] = new EntityReference("log_workorders", workorderID);
+            service.Create(createEntity);
+            var updateWO = new Entity("log_workorders");
+            updateWO["statuscode"] = new OptionSetValue(2);
+
+            service.Update(updateWO);
+        }
         private static void ApproveWO(OrganizationServiceProxy service, Guid workorderID)
         {
 
