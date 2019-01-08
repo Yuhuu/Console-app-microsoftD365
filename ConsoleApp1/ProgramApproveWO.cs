@@ -92,20 +92,39 @@ namespace LeadProcess
             return product;
         }
 
+        private static Entity GetPriceList(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression("pricelevel");
+            query.Criteria.AddCondition("name", ConditionOperator.Equal, "Eur");
+            var resultLise = service.RetrieveMultiple(query);
+
+            if (resultLise.Entities.Count == 0)
+                throw new Exception("Entity Not found");
+            var price = resultLise.Entities.FirstOrDefault();
+            return price;
+        }
+
         //Add two different work order products.One of type subscription, and one of type hardware.
         private static void AddProductWithTypeHardware(OrganizationServiceProxy service, Guid workorderID)
         {
             var createEntity = new Entity("log_workorderproduct");
             createEntity["log_workordersid"] = new EntityReference("log_workorders", workorderID);
             createEntity["log_hardwareproductid"] = GetProduct(service, "90001").ToEntityReference();
+            createEntity["log_hardwareproductdefaultprice"] = new Money(Convert.ToDecimal(10.00));
             service.Create(createEntity);
         }
+
 
         private static void AddProductWithTypeContract(OrganizationServiceProxy service, Guid workorderID)
         {
             var createEntity = new Entity("log_workorderproduct");
-            createEntity["log_workordersid"] = new EntityReference("log_workorders", workorderID);
             createEntity["log_hardwareproductid"] = GetProduct(service, "20041").ToEntityReference();
+            createEntity["log_hardwareproductdefaultprice"] = new Money(Convert.ToDecimal(10.00));
+            createEntity["log_workordersid"] = new EntityReference("log_workorders", workorderID);
+            //Dette kan være tomt
+            createEntity["log_contractproductid"] = GetProduct(service, "90500").ToEntityReference();
+            createEntity["log_contractproductdefaultprice"] = new Money(Convert.ToDecimal(90.00));
+            createEntity["log_pricelist"] = GetPriceList(service).ToEntityReference();
             service.Create(createEntity);
         }
         private static void ApproveWO(OrganizationServiceProxy service, Guid workorderID)
@@ -119,15 +138,14 @@ namespace LeadProcess
             updateWO["log_employeeid"] = GetInstallerPerson(service).ToEntityReference();
         
             service.Update(updateWO);
-        //State settes til inactive and status set to 
-        //Value: 182400002, Label: Scheduled
-        //Value: 1, Label: Open
-        //Value: 2, Label: Approved
-        //Value: 182400000, Label: Cancelled
-        //Value: 182400001, Label: No - show
+            //State settes til inactive and status set to 
+            //Value: 182400002, Label: Scheduled
+            //Value: 1, Label: Open
+            //Value: 2, Label: Approved
+            //Value: 182400000, Label: Cancelled
+            //Value: 182400001, Label: No - show
             updateWO["statecode"] = new OptionSetValue(1);
             updateWO["statuscode"] = new OptionSetValue(2);
-
             service.Update(updateWO);
         }
 
