@@ -41,6 +41,8 @@ namespace LeadProcess
                 </entity>
                 </fetch> ";
 
+
+
             EntityCollection result = service.RetrieveMultiple(new FetchExpression(fetch));
             foreach (var c in result.Entities)
             {
