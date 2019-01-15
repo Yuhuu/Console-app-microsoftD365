@@ -22,7 +22,7 @@ namespace LeadProcess
         
         private const string currency = "NOK";
         private const string leadSourceName = "Autolease";
-        public const string companyName = "Company 84n from Code";
+        public const string companyName = "Company 844n from Code";
 
         public static void Main(string[] args)
 
@@ -36,9 +36,9 @@ namespace LeadProcess
 
             Guid id = CreateLeadWithName(service, companyName);
             UpdateLead(service, id);
-            QualifyLead(service, id);
+            ////QualifyLead(service, id);
             //ProgramFetchQuery.Run(service);
-            ProgramApproveWO.Run(service);
+            ////ProgramApproveWO.Run(service);
 
         }
 
