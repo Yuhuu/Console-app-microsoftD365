@@ -22,7 +22,7 @@ namespace LeadProcess
         
         private const string currency = "NOK";
         private const string leadSourceName = "Autolease";
-        public const string companyName = "Company 844n from Code";
+        public const string companyName = "A. K. BOLIGUTLEIE AS";
 
         public static void Main(string[] args)
 
@@ -34,11 +34,25 @@ namespace LeadProcess
             clientCredentials.UserName.Password = credentials.Password;
             var service = new OrganizationServiceProxy(new Uri("https://intmscrmtst.sectoralarm.net/SectorAlarmfrtstPLAYGROUND/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
 
-            Guid id = CreateLeadWithName(service, companyName);
-            UpdateLead(service, id);
-            ////QualifyLead(service, id);
+            //Guid id = CreateLeadWithName(service, companyName);
+            CreateSMSWithName(service, companyName);
+            //UpdateLead(service, id);
+            //QualifyLead(service, id);
             //ProgramFetchQuery.Run(service);
             ////ProgramApproveWO.Run(service);
+
+        }
+
+        private static Entity GetAccount(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression("account");
+            query.Criteria.AddCondition("name", ConditionOperator.Equal, companyName);
+            var resultLise = service.RetrieveMultiple(query);
+
+            if (resultLise.Entities.Count == 0)
+                throw new Exception("Entity Not found");
+            var account = resultLise.Entities.FirstOrDefault();
+            return account;
 
         }
 
@@ -105,6 +119,19 @@ namespace LeadProcess
 
         }
 
+        private static Entity GetSMSTemplate(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression("log_smstemplate");
+            query.Criteria.AddCondition("log_name", ConditionOperator.Equal, "Booking Alartec");
+            var resultLise = service.RetrieveMultiple(query);
+
+            if (resultLise.Entities.Count == 0)
+                throw new Exception("Entity Not found");
+            var entity = resultLise.Entities.FirstOrDefault();
+            return entity;
+
+        }
+
         /*
         *  Lead create Process allow end user to choose which name they want to use 
         *  The purpose of we want the name as a parameter is that it can be easily track and create.
@@ -123,6 +150,27 @@ namespace LeadProcess
             newLead["log_leadsourceid"] = leadSource.ToEntityReference();
             newLead["ownerid"] = user.ToEntityReference();
             return service.Create(newLead);
+        }
+
+        /*
+   *  Lead create Process allow end user to choose which name they want to use 
+   *  The purpose of we want the name as a parameter is that it can be easily track and create.
+   */
+        private static Guid CreateSMSWithName(OrganizationServiceProxy service, String name)
+        {
+
+            var leadSource = GetLeadSourceName(service, leadSourceName);
+            var newSMS = new Entity("log_sms")
+            {
+                LogicalName = "log_sms"
+            };
+
+            newSMS["subject"] = name;
+            newSMS["log_smstemplateid"] = GetSMSTemplate(service).ToEntityReference();
+            newSMS["regardingobjectid"] = GetAccount(service).ToEntityReference();
+            var user = GetUser(service);
+            newSMS["ownerid"] = user.ToEntityReference();
+            return service.Create(newSMS);
         }
 
 
