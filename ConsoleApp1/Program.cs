@@ -22,7 +22,9 @@ namespace LeadProcess
         
         private const string currency = "NOK";
         private const string leadSourceName = "Autolease";
-        public const string companyName = "A. K. BOLIGUTLEIE AS";
+
+        public const string companyName = "7HEAVEN";
+        //public const string companyName = "5th week AS"; 
 
         public static void Main(string[] args)
 
@@ -168,6 +170,7 @@ namespace LeadProcess
             newSMS["subject"] = name;
             newSMS["log_smstemplateid"] = GetSMSTemplate(service).ToEntityReference();
             newSMS["regardingobjectid"] = GetAccount(service).ToEntityReference();
+            newSMS["log_dispatchstatus"] = new OptionSetValue(182400002);
             var user = GetUser(service);
             newSMS["ownerid"] = user.ToEntityReference();
             return service.Create(newSMS);
