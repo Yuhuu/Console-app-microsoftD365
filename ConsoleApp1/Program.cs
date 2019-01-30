@@ -22,8 +22,7 @@ namespace LeadProcess
         
         private const string currency = "NOK";
         private const string leadSourceName = "Autolease";
-
-        public const string companyName = "7HEAVEN";
+        public const string companyName = "Abdellatif Lyoubi";
         //public const string companyName = "5th week AS"; 
 
         public static void Main(string[] args)
@@ -36,8 +35,8 @@ namespace LeadProcess
             clientCredentials.UserName.Password = credentials.Password;
             var service = new OrganizationServiceProxy(new Uri("https://intmscrmtst.sectoralarm.net/SectorAlarmfrtstPLAYGROUND/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
 
-            //Guid id = CreateLeadWithName(service, companyName);
-            CreateSMSWithName(service, companyName);
+            Guid id = CreateLeadWithName(service, companyName);
+            //CreateSMSWithName(service, companyName);
             //UpdateLead(service, id);
             //QualifyLead(service, id);
             //ProgramFetchQuery.Run(service);
@@ -47,7 +46,10 @@ namespace LeadProcess
 
         private static Entity GetAccount(OrganizationServiceProxy service)
         {
-            var query = new QueryExpression("account");
+            var query = new QueryExpression("account")
+            {
+                ColumnSet = new ColumnSet(true)
+            };
             query.Criteria.AddCondition("name", ConditionOperator.Equal, companyName);
             var resultLise = service.RetrieveMultiple(query);
 
@@ -142,15 +144,14 @@ namespace LeadProcess
         {
 
             var leadSource = GetLeadSourceName(service, leadSourceName);
-            var newLead = new Entity("lead")
-            {
-                LogicalName = "lead"
-            };
+            var newLead = new Entity("lead");
 
             var user = GetUser(service);
             newLead["companyname"] = name;
             newLead["log_leadsourceid"] = leadSource.ToEntityReference();
-            newLead["ownerid"] = user.ToEntityReference();
+            //newLead["ownerid"] = user.ToEntityReference();
+            newLead["log_newaccount"] = GetAccount(service).ToEntityReference();
+            newLead["log_direction"] = new OptionSetValue(182400001); //moved out
             return service.Create(newLead);
         }
 
