@@ -22,7 +22,7 @@ namespace LeadProcess
         
         private const string currency = "NOK";
         private const string leadSourceName = "Autolease";
-        public const string companyName = "Abdellatif Lyoubi";
+        public const string companyName = "Alexander Angelov";
         //public const string companyName = "5th week AS"; 
 
         public static void Main(string[] args)
@@ -33,10 +33,11 @@ namespace LeadProcess
             var clientCredentials = new ClientCredentials();
             clientCredentials.UserName.UserName = credentials.Domain + "\\" + credentials.UserName;
             clientCredentials.UserName.Password = credentials.Password;
-            var service = new OrganizationServiceProxy(new Uri("https://intmscrmtst.sectoralarm.net/SectorAlarmfrtstPLAYGROUND/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+            var service = new OrganizationServiceProxy(new Uri("http://dynamicscrmproxysvctest/CrmSMSOutboundProxy.svc"), null, clientCredentials, null);
 
             Guid id = CreateLeadWithName(service, companyName);
             //CreateSMSWithName(service, companyName);
+            QualifyLeadWithMovingOut(service, id);
             //UpdateLead(service, id);
             //QualifyLead(service, id);
             //ProgramFetchQuery.Run(service);
@@ -114,6 +115,49 @@ namespace LeadProcess
         {
             var query = new QueryExpression("log_postcode");
             query.Criteria.AddCondition("log_name", ConditionOperator.Equal, "1178");
+            var resultLise = service.RetrieveMultiple(query);
+
+            if (resultLise.Entities.Count == 0)
+                throw new Exception("Entity Not found");
+            var post = resultLise.Entities.FirstOrDefault();
+            return post;
+
+        }
+
+        private static Entity GetTakdOverCASE(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression("incident");
+            query.Criteria.AddCondition("ticketnumber", ConditionOperator.Equal, "CAS-04306-K3D0K4");
+            var resultLise = service.RetrieveMultiple(query);
+
+            if (resultLise.Entities.Count == 0)
+                throw new Exception("Entity Not found");
+            var post = resultLise.Entities.FirstOrDefault();
+            return post;
+
+        }
+
+        //Get post code  which number is "1178"
+        //Service degree is full in that area
+        private static Entity GetIncident(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression("incident");
+            query.Criteria.AddCondition("ticketnumber", ConditionOperator.Equal, "CAS-04306-K3D0K4");
+            var resultLise = service.RetrieveMultiple(query);
+
+            if (resultLise.Entities.Count == 0)
+                throw new Exception("Entity Not found");
+            var post = resultLise.Entities.FirstOrDefault();
+            return post;
+
+        }
+
+        //Get post code  which number is "1178"
+        //Service degree is full in that area
+        private static Entity GetInstallation(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression("log_installation");
+            query.Criteria.AddCondition("log_hardwareid", ConditionOperator.Equal, "New Installation: Navn Etternavn");
             var resultLise = service.RetrieveMultiple(query);
 
             if (resultLise.Entities.Count == 0)
@@ -204,7 +248,10 @@ namespace LeadProcess
             entity["log_dateofbirth"] = DateTime.Now.AddYears(-19);
             //Date cannot be in the future
             entity["log_solddate"] = DateTime.Now;
+            entity["log_movingdate"] = DateTime.Now;
+
             entity["log_salespersonid"] = GetSalesPerson(service).ToEntityReference();
+            //street 1
             entity["address2_line1"] = "address2 vitaminveien 1, oslo";
             entity["log_address2_postalcode"] = GetPostCode(service).ToEntityReference();
             entity["log_postalcode"] = GetPostCode(service).ToEntityReference();
@@ -216,12 +263,53 @@ namespace LeadProcess
                 createEntity["log_leadid"] = new EntityReference("lead", id);
                     service.Create(createEntity);
 
-                Debug.WriteLine(entity.ToString());
+         
+            entity["log_takeovercase"] = GetTakdOverCASE(service).ToEntityReference();
             entity["log_convertleadflag"] = 1;
 
             service.Update(entity);
-                Debug.WriteLine(entity.ToString());
-            
+
+
+        }
+
+        private static void QualifyLeadWithMovingOut(OrganizationServiceProxy service, Guid id)
+        {
+            var entity = new Entity("lead");
+            entity = service.Retrieve("lead", id, new ColumnSet(true));
+            entity["leadid"] = id;
+            entity["log_movetoinstallation"] = GetInstallation(service).ToEntityReference();
+            /*entity["log_takeovercase"] = GetIncident(service).ToEntityReference();*/
+            entity["log_contracttermsid"] = GetContractTerms(service).ToEntityReference();
+            entity["log_dateofbirth"] = DateTime.Now.AddYears(-19);
+            //Date cannot be in the future
+            entity["log_solddate"] = DateTime.Now;
+            // this set to null when it is 
+            entity["log_movingdate"] = DateTime.Now.AddYears(-1);
+            entity["log_salespersonid"] = GetSalesPerson(service).ToEntityReference();
+            entity["log_address2_postalcode"] = GetPostCode(service).ToEntityReference();
+            entity["log_postalcode"] = GetPostCode(service).ToEntityReference();
+            entity["address1_line1"] = "address1 vitaminveien 1, oslo";
+            entity["log_canoverwritecreditcheck"] = true;
+   
+
+            var createEntity = new Entity("log_workorderproduct");
+            createEntity["log_leadid"] = new EntityReference("lead", id);
+            service.Create(createEntity);
+
+
+            entity["address2_line1"] = "address2 vitaminveien 1, oslo";
+            entity["log_direction"] = new OptionSetValue(182400001);
+            entity["log_takeovercase"] = GetTakdOverCASE(service).ToEntityReference();
+            //moved out
+            service.Update(entity);
+
+            entity["log_takeovercase"] = GetTakdOverCASE(service).ToEntityReference();
+            entity["log_convertleadflag"] = 1;
+
+            //entity["statecode"] = new OptionSetValue(1);
+            //entity["statuscode"] = new OptionSetValue(3);
+
+            //service.Update(entity);
         }
     }
 }
