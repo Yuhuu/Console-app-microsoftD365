@@ -130,6 +130,7 @@
   <ItemGroup>
     <Compile Include="ConsoleApp1\Program.cs" />
     <Compile Include="ConsoleApp1\ProgramApproveWO.cs" />
+    <Compile Include="ConsoleApp1\ProgramFetchXMLPagingCookies.cs" />
     <Compile Include="ConsoleApp1\ProgramFetchQuery.cs" />
   </ItemGroup>
   <ItemGroup>

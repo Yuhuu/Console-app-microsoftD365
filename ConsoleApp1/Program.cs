@@ -22,6 +22,7 @@ namespace LeadProcess
         private const string currency = "NOK";
         private const string leadSourceName = "Test";
         public const string companyName = "Ahello";
+        public const string phoneAccount = "Abbott David Roy";
         //public const string companyName = "5th week AS"; 
 
         public static void Main(string[] args)
@@ -67,7 +68,14 @@ namespace LeadProcess
             //Guid id = CreateLeadWithName(service, companyName);
             //CreateSMSWithName(service, companyName);
             //QualifyLead(service, id);
-            Guid id = CreateLeadWithSimpleinfor(service, companyName);
+            //Guid id = CreateLeadWithSimpleinfor(service, companyName);
+            int loopNumber = 100;
+
+            for (int i = 1; i < loopNumber; i++)
+            {
+                string descrip = "short description " + i;
+                CreateSMS(service, descrip);
+            }
             //QualifyLeadWithMovingOut(service, id);
             //UpdateLead(service, id);
             //QualifyLead(service, id);
@@ -82,7 +90,7 @@ namespace LeadProcess
             {
                 ColumnSet = new ColumnSet(true)
             };
-            query.Criteria.AddCondition("name", ConditionOperator.Equal, companyName);
+            query.Criteria.AddCondition("name", ConditionOperator.Equal, phoneAccount);
             var resultLise = service.RetrieveMultiple(query);
 
             if (resultLise.Entities.Count == 0)
@@ -256,36 +264,19 @@ namespace LeadProcess
         /*
         *  create sms 
         */
-        private static Guid CreateSMS(OrganizationServiceProxy service, String name)
+        private static Guid CreateSMS(OrganizationServiceProxy service, String subject)
         {
 
-            var leadSource = GetLeadSourceName(service, leadSourceName);
-            var newLead = new Entity("lead");
+            var phonecall = new Entity("phonecall");
 
             var user = GetUser(service);
-            newLead["companyname"] = name;
-            newLead["log_leadsourceid"] = leadSource.ToEntityReference();
-            //newLead["ownerid"] = user.ToEntityReference();
-            newLead["log_direction"] = new OptionSetValue(182400001); //moved out
-            newLead["log_contracttermsid"] = GetContractTerms(service).ToEntityReference();
-            newLead["telephone2"] = "45512131";
-            newLead["log_dateofbirth"] = DateTime.Now.AddYears(-19);
-            //Date cannot be in the future
-            newLead["log_solddate"] = DateTime.Now;
-            newLead["log_movingdate"] = DateTime.Now;
-
-            newLead["log_salespersonid"] = GetSalesPerson(service).ToEntityReference();
-            //street 1
-            //newLead["address2_line1"] = "address2 vitaminveien 1, oslo";
-            newLead["log_address2_postalcode"] = GetPostCode(service).ToEntityReference();
-            newLead["log_postalcode"] = GetPostCode(service).ToEntityReference();
-            newLead["address1_line1"] = "address1 vitaminveien 1, oslo";
-            newLead["log_canoverwritecreditcheck"] = true;
-            newLead["log_takeovercase"] = GetTakdOverCASE(service).ToEntityReference();
-            newLead["log_typeoflead"] = new OptionSetValue(182400002);
-            newLead["log_movefrominstallation"] = GetInstallation(service).ToEntityReference();
-            newLead["log_movetoinstallation"] = GetInstallation(service).ToEntityReference();
-            return service.Create(newLead);
+            phonecall["subject"] = subject;
+            phonecall["regardingobjectid"] = GetAccount(service).ToEntityReference();
+            phonecall["ownerid"] = user.ToEntityReference();
+            phonecall["from"] = GetAccount(service).ToEntityReference();
+            phonecall["to"] = user.ToEntityReference();
+            phonecall["statecode"] = new OptionSetValue(2); //active
+            return service.Create(phonecall);
         }
         /*
         *  Lead create Process allow end user to choose which name they want to use 
