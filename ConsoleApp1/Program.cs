@@ -69,18 +69,20 @@ namespace LeadProcess
             //CreateSMSWithName(service, companyName);
             //QualifyLead(service, id);
             //Guid id = CreateLeadWithSimpleinfor(service, companyName);
-            int loopNumber = 100;
 
-            for (int i = 1; i < loopNumber; i++)
-            {
-                string descrip = "short description " + i;
-                CreateSMS(service, descrip);
-            }
+            //int loopNumber = 100;
+
+            //for (int i = 1; i < loopNumber; i++)
+            //{
+            //    string descrip = "short description " + i;
+            //    CreateSMS(service, descrip);
+            //}
+
             //QualifyLeadWithMovingOut(service, id);
             //UpdateLead(service, id);
             //QualifyLead(service, id);
             //ProgramFetchQuery.Run(service);
-            ////ProgramApproveWO.Run(service);
+            ProgramFetchXMLPagingCookies.Run(service);
 
         }
 
