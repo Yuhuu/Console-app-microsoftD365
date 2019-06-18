@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.ServiceModel.Description;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk.Query;
-
+using Newtonsoft.Json.Linq;
 
 namespace LeadProcess
 {
@@ -22,29 +24,33 @@ namespace LeadProcess
         private const string currency = "NOK";
         private const string leadSourceName = "Test";
         public const string companyName = "Ahello";
-        public const string phoneAccount = "Abbott David Roy";
+        // account which got the sms
+        // ONLY IN NO TEST
+        //public const string id = "CF56E92C-C0C7-4B4A-A97D-09B050398B92";
+
+        public const string id = "AFBA2387-B633-E711-80CB-005056A6C323";
         //public const string companyName = "5th week AS"; 
 
         public static void Main(string[] args)
-
-
         {
             var credentials = CredentialCache.DefaultNetworkCredentials;
             var clientCredentials = new ClientCredentials();
             clientCredentials.UserName.UserName = credentials.Domain + "\\" + credentials.UserName;
             clientCredentials.UserName.Password = credentials.Password;
             //playground
-            // var service = new OrganizationServiceProxy(new Uri("https://intmscrmtst.sectoralarm.net/SectorAlarmfrtstPLAYGROUND/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+           //  var service = new OrganizationServiceProxy(new Uri("https://intmscrmtst.sectoralarm.net/SectorAlarmfrtstPLAYGROUND/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
             //DEV
-            var organizationList = new List<IOrganizationService>();
-            var countryList = new List<string>() { "NO", "SE", "FI", "ES", "IE", "FR" };
-            foreach (var country in countryList)
-            {
-                var addService = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
-                organizationList.Add(addService);
-            }
-            //Here is service 
-            var service = new OrganizationServiceProxy(new Uri("https://intmscrmtst.sectoralarm.net/SectorAlarmnotst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+            //var organizationList = new List<IOrganizationService>();
+
+            //var countryList = new List<string>() { "NO", "SE", "FI", "ES", "IE", "FR" };
+            //foreach (var country in countryList)
+            //{
+            //    var addService = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+            //    organizationList.Add(addService);
+            //}
+
+            //Here is service FOR PROD
+            var service = new OrganizationServiceProxy(new Uri("https://intmscrm.sectoralarm.net/SectorAlarmNO/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
             //var qAccount = new QueryExpression("account");
             //qAccount.Criteria.AddCondition("adsasdf", ConditionOperator.Equal, "something");
             //var getAccount = service.RetrieveMultiple(qAccount).Entities;
@@ -56,12 +62,12 @@ namespace LeadProcess
             var throwThis = TimeZoneInfo.GetSystemTimeZones();
             //throwALl.AppendLine($"'My' system: {TimeZoneInfo.GetSystemTimeZones();}");
 
-            foreach (var org in organizationList)
-            {
-                var alocalZone1 = TimeZoneInfo.Local;
-                var throwALl1 = new StringBuilder();
-                throwALl.AppendLine($"Local:{alocalZone1}");
-            }
+            //foreach (var org in organizationList)
+            //{
+            //    var alocalZone1 = TimeZoneInfo.Local;
+            //    var throwALl1 = new StringBuilder();
+            //    throwALl.AppendLine($"Local:{alocalZone1}");
+            //}
 
             //throw new Exception(throwALl.ToString());
 
@@ -70,19 +76,35 @@ namespace LeadProcess
             //QualifyLead(service, id);
             //Guid id = CreateLeadWithSimpleinfor(service, companyName);
 
-            //int loopNumber = 100;
+            //TODO : for setting in more
 
-            //for (int i = 1; i < loopNumber; i++)
-            //{
-            //    string descrip = "short description " + i;
-            //    CreateSMS(service, descrip);
-            //}
+            int loopnumber = 120;
+
+            for (int i = 12001; i < loopnumber; i++)
+            {
+                string descrip2 = "short description " + i;
+                Debug.WriteLine(descrip2);
+                CreateSMS(service, descrip2);
+            }
+
+
+            for (int i = 1700; i < loopnumber; i++)
+            {
+                string descrip = "short description " + i;
+                Debug.WriteLine(descrip);
+                CreateACTholder(service, descrip);
+            }
 
             //QualifyLeadWithMovingOut(service, id);
             //UpdateLead(service, id);
             //QualifyLead(service, id);
             //ProgramFetchQuery.Run(service);
-            ProgramFetchXMLPagingCookies.Run(service);
+            //ProgramFetchXMLPagingCookies.Run(service);
+            //ProgramFetchXMLPagingCookies.RunQueryExpression(service);
+            //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
+            //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
+            ProgramFetchXMLPagingCookies.RunQueryExpressionXML2(service);
+
 
         }
 
@@ -92,7 +114,7 @@ namespace LeadProcess
             {
                 ColumnSet = new ColumnSet(true)
             };
-            query.Criteria.AddCondition("name", ConditionOperator.Equal, phoneAccount);
+            query.Criteria.AddCondition("accountid", ConditionOperator.Equal, id);
             var resultLise = service.RetrieveMultiple(query);
 
             if (resultLise.Entities.Count == 0)
@@ -264,8 +286,32 @@ namespace LeadProcess
 
 
         /*
-        *  create sms 
+      *  create activities holder 
         */
+        private static Guid CreateACTholder(OrganizationServiceProxy service, String subject)
+        {
+
+            var phonecall = new Entity("sa_activityholder");
+
+            var user = GetUser(service);
+            phonecall["sa_subject"] = subject;
+            phonecall["sa_description"] = subject;
+            phonecall["sa_regarding"] = GetAccount(service).GetAttributeValue <string>("name");
+            phonecall["sa_accountid"] = GetAccount(service).ToEntityReference().ToString();
+            phonecall["sa_activityid"] = GetAccount(service).ToEntityReference().ToString();
+            phonecall["ownerid"] = user.ToEntityReference();
+            phonecall["createdby"] = user.ToEntityReference();
+            phonecall["createdon"] = DateTime.Now.AddYears(-2);
+            phonecall["modifiedby"] = user.ToEntityReference();
+            phonecall["modifiedon"] = DateTime.Now.AddYears(-1);
+            phonecall["sa_actualend"] = DateTime.UtcNow;
+            phonecall["statecode"] = new OptionSetValue(2); //active
+            return service.Create(phonecall);
+        }
+
+        /*
+
+ */
         private static Guid CreateSMS(OrganizationServiceProxy service, String subject)
         {
 
@@ -274,7 +320,6 @@ namespace LeadProcess
             var user = GetUser(service);
             phonecall["subject"] = subject;
             phonecall["regardingobjectid"] = GetAccount(service).ToEntityReference();
-            phonecall["ownerid"] = user.ToEntityReference();
             phonecall["from"] = GetAccount(service).ToEntityReference();
             phonecall["to"] = user.ToEntityReference();
             phonecall["statecode"] = new OptionSetValue(2); //active
@@ -428,6 +473,158 @@ namespace LeadProcess
             //entity["statuscode"] = new OptionSetValue(3);
 
             service.Update(entity);
+        }
+
+        public static void RunQueryAndGetDictionary(OrganizationServiceProxy service)
+        {
+            var qWorkorder = new QueryExpression("log_workorders");// {  ColumnSet = new ColumnSet("workordertype") };
+            qWorkorder.Criteria.AddCondition("log_installationid", ConditionOperator.Equal, id);
+
+            qWorkorder.ColumnSet = new ColumnSet("log_typeofworkorder", "statuscode");
+            var getTargetWithType = service.RetrieveMultiple(qWorkorder).Entities;
+            var dictioinary = getTargetWithType.GroupBy(entry => entry.GetAttributeValue<OptionSetValue>("statuscode").Value.ToString(), entry => entry.GetAttributeValue<OptionSetValue>("log_typeofworkorder").Value.ToString())
+                .ToDictionary(entry => entry.Key, entry => entry.ToList());
+
+            string inputStringFromWF = @"[
+                    { Statusreason : 182400002, Type: 182400010},
+                    { Statusreason : 1, Type: 182400010},
+                    { Statusreason : 182400002, Type: 182400001},
+                    { Statusreason : 1, Type: 182400001},
+                    { Statusreason : 182400002, Type: 182400004},
+                    { Statusreason : 182400002, Type: 182400009},
+                    { Statusreason : 182400002, Type: 182400006},
+                    ]";
+            var list = JsonToDictionary(inputStringFromWF);
+
+            var i = 1;
+            foreach (var inputRestult in list)
+            {
+                bool exist = false;
+                if (dictioinary.Keys.Contains(inputRestult["Statusreason"]))
+                {
+                    if (dictioinary[inputRestult["Statusreason"]].Contains(inputRestult["Type"].ToString()))
+                    {
+                        exist = true;
+                    }
+
+                }
+                Debug.WriteLine("No Existed statusreason: {0}   {1} for item nr:{2}  {3}", (inputRestult["Statusreason"]), (inputRestult["Type"]), i, exist);
+                i++;
+            }
+            string sampleJson = "{\"results\":[" +
+         "{\"Statusreason\":\"182400002\",\"Type\":\"182400001\"}," +
+         "{\"Statusreason\":\"182400000\",\"Type\":\"182400001\"}," +
+         "{\"Statusreason\":\"182400001\",\"Type\":\"supervisor1\"}" +
+         "]}";
+
+            //string inputStringFromWF = @"[
+            //        { Statusreason : 182400002, Type: 182400010},
+            //        { Statusreason : 1, Type: 182400010},
+            //        { Statusreason : 182400002, Type: 182400001},
+            //        { Statusreason : 1, Type: 182400001},
+            //        { Statusreason : 182400002, Type: 182400004},
+            //        { Statusreason : 182400002, Type: 182400009},
+            //        { Statusreason : 182400002, Type: 182400006},
+            //        ]";
+
+            JObject resultsJson = JObject.Parse(sampleJson);
+            Debug.WriteLine("Play with spit string");
+
+            Func<string, string> checkStatusReason = delegate (string caseSwitch)
+            {
+                switch (caseSwitch)
+                {
+
+                    case "1":
+                        return "Open";
+                    case "2":
+                        return "Approved";
+                    case "182400000":
+                        return "Cancelled";
+                    case "182400001":
+                        return "NoShow";
+                    case "182400002":
+                        return "Scheduled";
+                    default:
+                        return "Error";
+                };
+            };
+
+            Func<string, string> checkWOType = delegate (string caseSwitch)
+            {
+                switch (caseSwitch)
+                {
+                    case "182400000":
+                        return "Installation";
+                    case "182400001":
+                        return "Service";
+                    case "182400002":
+                        return "Flexi";
+                    case "182400004":
+                        return "TakeoverService";
+                    case "182400009":
+                        return "TakeoverUpgrade";
+                    case "182400006":
+                        return "Upgrade";
+                    case "182400010":
+                        return "RecurringMaintenance";
+                    default:
+                        return "Error";
+                };
+            };
+
+            foreach (var result in resultsJson["results"])
+            {
+                // this can be a string or null
+                string statusreason = (string)result["Statusreason"];
+
+                //  this can be a string 
+                string type = (string)result["Type"];
+
+                Debug.WriteLine("Exists{0}{1}", checkStatusReason(statusreason), checkWOType(type));
+            }
+            Debug.WriteLine("Play with spit string end");
+
+            Debug.WriteLine("Play with JsonToDictionary start");
+
+            foreach (var result in JsonToDictionary(inputStringFromWF))
+            {
+
+                string statusreason = (string)result["Statusreason"];
+                string type = (string)result["Type"];
+                var outputParametersString = "Exists" + checkStatusReason(statusreason) + checkWOType(type);
+                Debug.WriteLine(outputParametersString);
+
+            }
+            Debug.WriteLine("Play with JsonToDictionary end");
+
+
+        }
+
+        private static List<Dictionary<string, string>> JsonToDictionary(string json)
+        {
+            json = Regex.Replace(json, @" ", "");
+            json = json.Replace("\r\n", "")
+            .Replace("[", "").Replace("]", "")
+            .Replace("{", "").Replace("}", "").Trim();
+            var list = new List<Dictionary<string, string>>();
+            var attributes = json.Split(new string[] { ":", "," }, StringSplitOptions.None);
+            for (var i = 0; i < attributes.Length; i += 4)
+            {
+                var dictionary = new Dictionary<string, string>();
+                var statusreasonKey = (attributes[i]);
+                if (string.IsNullOrEmpty(statusreasonKey))
+                    continue;
+                var StatusreasonKeyvalue = (attributes[i + 1]);
+                dictionary.Add(statusreasonKey, StatusreasonKeyvalue);
+                var typeKey = (attributes[i + 2]);
+                if (string.IsNullOrEmpty(typeKey))
+                    continue;
+                var typeValue = (attributes[i + 3]);
+                dictionary.Add(typeKey, typeValue);
+                list.Add(dictionary);
+            }
+            return list;
         }
     }
 }

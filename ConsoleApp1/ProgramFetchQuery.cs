@@ -22,7 +22,7 @@ namespace LeadProcess
           * then it is printed out in Debug output.
           **/
         public static void Run(OrganizationServiceProxy service)
-    {
+        {
 
             // Retrieve all accounts owned by the user with read access rights to the accounts and   
             // where the last name of the user is not Cannon.   
@@ -50,6 +50,10 @@ namespace LeadProcess
             }
         }
 
+        public static void RunOnArray()
+        {
 
-}
+
+        }
+    }
 }
