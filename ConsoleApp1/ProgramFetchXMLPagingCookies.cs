@@ -28,21 +28,31 @@ namespace LeadProcess
         //norway test with small amont of wo
        // public static String id = "437262B2-41B6-E211-9007-E41F13BE0AF6";
 
-        public static int fetchCount = 2000;
+        public static int fetchCount = 2;
+
+        //no test  7 record
+        //public static string id = "19636F86-2DEB-E311-BE56-E41F13BE0AF4";
 
         //6666 items
-        public static String id = "CF56E92C-C0C7-4B4A-A97D-09B050398B92";
+        // public static String id = "CF56E92C-C0C7-4B4A-A97D-09B050398B92";
 
 
         // 1107 items
         //public static String id = "1C2D4751-D17E-4AF5-AF3C-F3511E633DAE";
 
-        // 1107 items
+        // 4 items /nor test
         // public static String id = "884C892D-BA4F-46EE-819E-B53271ABD3CB";
 
 
-        // 11 items., no lead activities
-        //public static String id = "60AA56EB-5BBB-E511-91CC-E41F13BE0AF4";
+        // 11 items., no lead activities/nor test
+        public static String id = "60AA56EB-5BBB-E511-91CC-E41F13BE0AF4";
+        //norge test Abbas Marofi
+
+        //no test with duplicated lead
+        //public static string id = "AD22C2D1-CC34-E711-80D4-005056A6241E";
+
+        //no test without duplicated lead, 7Items
+        //public static String id = "46a1e267-734a-487c-abf8-2a75ddabede4";
 
         /*
           * Retrieve all accounts owned by the user with read access rights to the accounts 
@@ -55,6 +65,8 @@ namespace LeadProcess
 
             String openFilter = "<condition attribute=\"statecode\" operator=\"neq\" value=\"1\" />";
             openFilter += "<condition attribute=\"statecode\" operator=\"neq\" value=\"2\" />";
+            openFilter = "";
+
 
             int pageNumber = 1;
 
@@ -138,7 +150,7 @@ namespace LeadProcess
                    "  </entity>" +
                    "</fetch>";
 
-            //count for task
+            //count for task and lead
             var fetchPagingTask = "<fetch distinct=\"true\" mapping=\"logical\" aggregate=\"true\">" +
                     "  <entity name=\"account\" >" +
                     "    <filter>" +
@@ -153,14 +165,6 @@ namespace LeadProcess
                     "        </filter>" +
                     "      </link-entity>" +
                     "    </link-entity>" +
-                    "  </entity>" +
-                    "</fetch>";
-            //count foor Lead
-            var fetchPaging4 = "<fetch distinct=\"true\" mapping =\"logical\" aggregate=\"true\" >" +
-                  "  <entity name=\"account\" >" +
-                  //"    <filter>" +
-                  //"      <condition attribute=\"accountid\" operator=\"eq\" value=\"" + id + "\" />" +
-                  //"    </filter>" +
                   "    <link-entity name=\"lead\" from=\"log_newaccount\" to=\"accountid\" link-type=\"outer\" >" +
                   "      <link-entity name=\"activityparty\" from=\"partyid\" to=\"leadid\" link-type=\"outer\" >" +
                   "        <link-entity name=\"activitypointer\" from=\"activityid\" to=\"activityid\" link-type=\"inner\" alias=\"activity\" >" +
@@ -168,10 +172,44 @@ namespace LeadProcess
                   "          <filter>" +
                        openFilter +
                   "          </filter>" +
-                  "          <link-entity name=\"systemuser\" from=\"systemuserid\" to=\"createdby\" alias=\"createdby\" >" +
-                  "          </link-entity>" +
-                  "          <link-entity name=\"systemuser\" from=\"systemuserid\" to=\"modifiedby\" alias=\"modifiedby\" >" +
-                  "          </link-entity>" +
+                  "        </link-entity>" +
+                  "      </link-entity>" +
+                  "    </link-entity>" +
+                    "  </entity>" +
+                    "</fetch>";
+
+            //count all activities which realted to account
+            var fetchcountXMLAll = "<fetch distinct=\"true\" mapping=\"logical\" aggregate=\"true\">" +
+                   "  <entity name=\"activitypointer\" >" +
+                   "  <attribute name =\"activityid\" aggregate=\"countcolumn\" alias=\"CountActivities\" distinct=\"true\" />" +
+                   "  <filter type=\"and\" >" +
+                   "      <condition attribute=\"activitytypecode\" operator=\"neq\" value=\"4401\" />" + //4401 - campaignresponse--
+                   openFilter +
+                   "    </filter>" +
+                   "<filter type=\"or\" >" +
+                   "      <condition attribute = \"accountid\" entityname = \"au\" operator = \"eq\" uitype = \"account\" value = \"{" + id + "}\" />" +
+                   "      <condition attribute=\"log_account\" entityname=\"bd\" operator=\"eq\" uitype=\"account\" value=\"{" + id + "}\" />" +
+                   "</filter>" +
+                   " <link-entity name=\"activityparty\" from=\"activityid\" to=\"activityid\" alias=\"at\" distinct=\"true\" >" +
+                   "     <link-entity name=\"account\" from=\"accountid\" to=\"partyid\" alias=\"au\" link-type=\"outer\" />" +
+                   "     <link-entity name=\"task\" from=\"activityid\" to=\"activityid\" alias=\"bd\" link-type=\"outer\" />" +
+                   "</link-entity>" +
+                   "  </entity>" +
+                   "</fetch>";
+
+            //count foor Lead
+            var fetchPaging4 = "<fetch distinct=\"true\" mapping =\"logical\" aggregate=\"true\" >" +
+                  "  <entity name=\"account\" >" +
+                  "    <attribute name =\"accountid\" aggregate=\"countcolumn\" alias=\"OKmodifiedon\" distinct=\"false\" />" +
+                  "    <filter>" +
+                  "      <condition attribute=\"accountid\" operator=\"eq\" value=\"" + id + "\" />" +
+                  "    </filter>" +
+                  "    <link-entity name=\"lead\" from=\"log_newaccount\" to=\"accountid\" link-type=\"outer\" >" +
+                  "      <link-entity name=\"activityparty\" from=\"partyid\" to=\"leadid\" link-type=\"outer\" >" +
+                  "        <link-entity name=\"activitypointer\" from=\"activityid\" to=\"activityid\" link-type=\"inner\" alias=\"activity\" >" +
+                  "          <filter>" +
+                       openFilter +
+                  "          </filter>" +
                   "        </link-entity>" +
                   "      </link-entity>" +
                   "    </link-entity>" +
@@ -200,7 +238,7 @@ namespace LeadProcess
                  "</fetch>";
 
             //correct answer with count column
-            var fetchPaging2 = "<fetch distinct=\"true\" mapping=\"logical\" aggregate=\"true\">" +
+            var fetchPaging2 = "<fetch distinct=\"false\" mapping=\"logical\" aggregate=\"true\">" +
                    "  <entity name=\"account\" >" +
                    "    <filter>" +
                    "      <condition attribute=\"accountid\" operator=\"eq\" value=\"" + id + "\" />" +
@@ -208,7 +246,8 @@ namespace LeadProcess
                    "    <link-entity name=\"activityparty\" from=\"partyid\" to=\"accountid\">" +
                    "      <link-entity name=\"activitypointer\" from=\"activityid\" to=\"activityid\" link-type=\"inner\" alias=\"activity\" >" +
                    "        <attribute name =\"activityid\" aggregate=\"countcolumn\" alias=\"OKmodifiedon\" distinct=\"true\" />" +
-                   "        <filter  type=\"and\" >" +
+                   "        <attribute name =\"statecode\" aggregate=\"countcolumn\" alias=\"OKcreateon\" distinct=\"true\" />" +
+                    "        <filter  type=\"and\" >" +
                    "          <condition attribute=\"activitytypecode\" operator=\"neq\" value=\"4401\" />" + //4401 - campaignresponse--
                    openFilter +
                    "        </filter>" +
@@ -254,9 +293,85 @@ namespace LeadProcess
                    "  </entity>" +
                    "</fetch>";
 
+            //fetchPagingWithDuplicates activities
+            var fetchPagingWithDuplicates = "<fetch distinct=\"true\" mapping=\"logical\">" +
+                    "  <entity name=\"activitypointer\" >" +
+                    "  <filter type=\"and\" >" +
+                    "   <condition attribute=\"activitytypecode\" operator=\"neq\" value=\"4401\" />" + //4401 - campaignresponse--
+                        openFilter +
+                    "  </filter>" +
+                    "        <order attribute=\"createdon\" descending=\"true\" />" +
+                    "        <attribute name=\"createdon\" />" +
+                    "        <attribute name=\"activityid\" />" +
+                    "        <attribute name=\"modifiedon\" />" +
+                    "        <attribute name=\"statecode\" />" +
+                    "        <attribute name=\"subject\" />" +
+                    "        <attribute name=\"activityadditionalparams\" />" +
+                    "        <attribute name=\"activitytypecode\" />" +
+                    "        <attribute name=\"description\" />" +
+                    "        <attribute name=\"createdby\" />" +
+                    "        <attribute name=\"modifiedby\" />" +
+                    "        <attribute name=\"actualend\" />" +
+                    "        <attribute name=\"scheduledend\" />" +
+                    "        <attribute name=\"regardingobjectid\" />" +
+                    "<filter type=\"or\" >" +
+                   "      <condition attribute = \"accountid\" entityname = \"au\" operator = \"eq\" uitype = \"account\" value = \"{" + id + "}\" />" +
+                   "      <condition attribute=\"log_account\" entityname=\"bd\" operator=\"eq\" uitype=\"account\" value=\"{" + id + "}\" />" +
+                    "</filter>" +
+                    " <link-entity name=\"activityparty\" from=\"activityid\" to=\"activityid\" alias=\"at\" distinct=\"true\" >" +
+                    "     <link-entity name=\"account\" from=\"accountid\" to=\"partyid\" alias=\"au\" link-type=\"outer\" />" +
+                    "     <link-entity name=\"task\" from=\"activityid\" to=\"activityid\" alias=\"bd\" link-type=\"outer\" />" +
+                    "</link-entity>" +
+                    "       <link-entity name=\"systemuser\" from=\"systemuserid\" to=\"createdby\" alias=\"createdby\" >" +
+                    "          <attribute name=\"fullname\" />" +
+                    "        </link-entity>" +
+                    "        <link-entity name=\"systemuser\" from=\"systemuserid\" to=\"modifiedby\" alias=\"modifiedby\" >" +
+                    "          <attribute name=\"fullname\" />" +
+                    "        </link-entity>" +
+                    "  </entity>" +
+                    "</fetch>";
+            var sw = Stopwatch.StartNew();
             while (true)
             {
-                string leadActivitiesXML = CreateXml(fetchPagingLead, pagingCookie, pageNumber, fetchCount);
+                string leadActivitiesXML = CreateXml(fetchcountXMLAll, pagingCookie, pageNumber, fetchCount);
+
+                EntityCollection result = service.RetrieveMultiple(new FetchExpression(leadActivitiesXML));
+                Debug.WriteLine(result);
+                foreach (var c in result.Entities)
+                {
+
+                    var jsonString = JsonConvert.SerializeObject(c);
+                    Debug.WriteLine(jsonString.ToString());
+                    recordCount++;
+                }
+
+                if (result.MoreRecords)
+                {
+                    Debug.WriteLine("\n****************\nPage number {0}\n****************", pageNumber);
+
+                    // Increment the page number to retrieve the next page.
+                    pageNumber++;
+
+                    // Set the paging cookie to the paging cookie returned from current results.                            
+                    pagingCookie = result.PagingCookie;
+                    Debug.WriteLine(pagingCookie);
+                }
+                else
+                {
+                    Debug.WriteLine("\n****************\nPage number {0}\n****************", pageNumber);
+                    Debug.WriteLine("fetchcountXMLAll Activities Total record {0}", recordCount);
+                    sw.Stop();
+                    TimeSpan time = sw.Elapsed;
+                    Debug.WriteLine(time.ToString());
+                    // If no more records in the result nodes, exit the loop.
+                    break;
+
+                }
+            }
+            sw = Stopwatch.StartNew();
+            while (true)
+            {
+                string leadActivitiesXML = CreateXml(fetchPaging2, pagingCookie, pageNumber, fetchCount);
 
                 EntityCollection result = service.RetrieveMultiple(new FetchExpression(leadActivitiesXML));
                 Debug.WriteLine(result);
@@ -284,41 +399,8 @@ namespace LeadProcess
                     Debug.WriteLine("fetchPaging2 Activities Total record {0}", recordCount);
 
                     // If no more records in the result nodes, exit the loop.
-                    break;
-
-                }
-            }
-
-            while (true)
-            {
-                string leadActivitiesXML = CreateXml(fetchPaging4, pagingCookie, pageNumber, fetchCount);
-
-                EntityCollection result = service.RetrieveMultiple(new FetchExpression(leadActivitiesXML));
-                Debug.WriteLine(result);
-                foreach (var c in result.Entities)
-                {
-
-                    var jsonString = JsonConvert.SerializeObject(c);
-                    Debug.WriteLine(jsonString.ToString());
-                    recordCount++;
-                }
-
-                if (result.MoreRecords)
-                {
-                    Debug.WriteLine("\n****************\nPage number {0}\n****************", pageNumber);
-
-                    // Increment the page number to retrieve the next page.
-                    pageNumber++;
-
-                    // Set the paging cookie to the paging cookie returned from current results.                            
-                    pagingCookie = result.PagingCookie;
-                    Debug.WriteLine(pagingCookie);
-                }
-                else
-                {
-                    Debug.WriteLine("fetchPaging4 Activities Total record {0}", recordCount);
-
-                    // If no more records in the result nodes, exit the loop.
+                    TimeSpan time = sw.Elapsed;
+                    Debug.WriteLine(time.ToString());
                     break;
 
                 }
@@ -358,7 +440,7 @@ namespace LeadProcess
                     "        <attribute name=\"regardingobjectid\" />" +
                     "        <filter>" +
                     openFilter +
-                    "          <condition attribute=\"regardingobjectid\" operator=\"neq\" value=\"03F0C8D1-34BC-4D93-9CBC-0DE87AE32449\" />" +
+                    "          <condition attribute=\"regardingobjectid\" operator=\"neq\" value=\"{ 03F0C8D1-34BC-4D93-9CBC-0DE87AE32449\" }/>" +
                     "        </filter>" +
                     "        <link-entity name=\"systemuser\" from=\"systemuserid\" to=\"createdby\" alias=\"createdby\" >" +
                     "          <attribute name=\"fullname\" />" +

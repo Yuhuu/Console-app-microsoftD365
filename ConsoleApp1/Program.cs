@@ -6,6 +6,7 @@ using System.Net;
 using System.ServiceModel.Description;
 using System.Text;
 using System.Text.RegularExpressions;
+using ConsoleAppCsharp.ConsoleApp1;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk.Query;
@@ -22,14 +23,16 @@ namespace LeadProcess
     {
 
         private const string currency = "NOK";
-        private const string leadSourceName = "Test";
-        public const string companyName = "Ahello";
+        private const string leadSourceName = "test";
+     
         // account which got the sms
         // ONLY IN NO TEST
         //public const string id = "CF56E92C-C0C7-4B4A-A97D-09B050398B92";
 
-        public const string id = "AFBA2387-B633-E711-80CB-005056A6C323";
-        //public const string companyName = "5th week AS"; 
+        //public const string id = "AFBA2387-B633-E711-80CB-005056A6C323";
+        //public const string companyName = uiname="A AH ALSAHOO, FAHADs" 
+        //accountID i Es test
+        public const string accountId = "A2DCA4DF-85BA-E711-80DA-005056A67C5E";
 
         public static void Main(string[] args)
         {
@@ -38,7 +41,7 @@ namespace LeadProcess
             clientCredentials.UserName.UserName = credentials.Domain + "\\" + credentials.UserName;
             clientCredentials.UserName.Password = credentials.Password;
             //playground
-           //  var service = new OrganizationServiceProxy(new Uri("https://intmscrmtst.sectoralarm.net/SectorAlarmfrtstPLAYGROUND/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+            //  var service = new OrganizationServiceProxy(new Uri("https://intmscrmtst.sectoralarm.net/SectorAlarmfrtstPLAYGROUND/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
             //DEV
             //var organizationList = new List<IOrganizationService>();
 
@@ -48,9 +51,11 @@ namespace LeadProcess
             //    var addService = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
             //    organizationList.Add(addService);
             //}
+            var country = "NO";
+            var service = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
 
             //Here is service FOR PROD
-            var service = new OrganizationServiceProxy(new Uri("https://intmscrm.sectoralarm.net/SectorAlarmNO/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+            //var service = new OrganizationServiceProxy(new Uri("https://intmscrm.sectoralarm.net/SectorAlarmNO/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
             //var qAccount = new QueryExpression("account");
             //qAccount.Criteria.AddCondition("adsasdf", ConditionOperator.Equal, "something");
             //var getAccount = service.RetrieveMultiple(qAccount).Entities;
@@ -71,8 +76,14 @@ namespace LeadProcess
 
             //throw new Exception(throwALl.ToString());
 
-            //Guid id = CreateLeadWithName(service, companyName);
-            //CreateSMSWithName(service, companyName);
+            //Test this in  test
+            string timeString = DateTime.Now.ToShortTimeString();
+            string companyName = "created : " + timeString;
+            Guid id = CreateLeadWithName(service, companyName);
+
+        
+            //Guid id2 = CreateIncomingWithName(service, companyName);
+            ///CreateSMSWithName(service, companyName);
             //QualifyLead(service, id);
             //Guid id = CreateLeadWithSimpleinfor(service, companyName);
 
@@ -96,16 +107,202 @@ namespace LeadProcess
             }
 
             //QualifyLeadWithMovingOut(service, id);
+            EntityReference role1EntityRef= null;
+            String Role1RoleName = "Legal owner";
+            EntityReference role2EntityRef = null;
+            String Role2RoleName = "Installation";
+            var newConnectionId = AddConnection(role1EntityRef, Role1RoleName, role2EntityRef, Role2RoleName, service);
             //UpdateLead(service, id);
-            //QualifyLead(service, id);
+
             //ProgramFetchQuery.Run(service);
             //ProgramFetchXMLPagingCookies.Run(service);
             //ProgramFetchXMLPagingCookies.RunQueryExpression(service);
             //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
             //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
-            ProgramFetchXMLPagingCookies.RunQueryExpressionXML2(service);
+            //ProgramFetchXMLPagingCookies.Run(service);
 
 
+        }
+
+        private static Guid AddConnection(EntityReference entity1, string role1, EntityReference entity2, string role2, OrganizationServiceProxy service)
+        {
+            var progress = new StringBuilder();
+            try
+            {
+                progress.AppendLine("findRole1...");
+                var findRole1 = GetRoleOrRolesForEntity(entity1.LogicalName, role1, service);
+                progress.AppendLine($"Found! {findRole1.Count}\r\nfindRole2...");
+                var findRole2 = GetRoleOrRolesForEntity(entity2.LogicalName, role2, service);
+                progress.AppendLine($"Found! {findRole2.Count}");
+                if (findRole1.Count != 1 || findRole2.Count != 1)
+                {
+                    throw new InvalidPluginExecutionException($"Tried to find unique roles failed. \r\n - Role {role1} for entity {entity1.LogicalName} return {findRole1.Count}"
+                        + $"\r\n - Role {role2} for entity {entity2.LogicalName} return {findRole2.Count}");
+                }
+                //logic based on specific Connections..
+                progress.AppendLine($"Should create connection?");
+                var shouldCreateConnection = ProcessConnectionRules(entity1, role1, entity2, role2, service);
+                progress.AppendLine($"==> {shouldCreateConnection}");
+                if (!shouldCreateConnection)
+                {
+                    progress.AppendLine($":: No returning Guid.Empty");
+                    return Guid.Empty;
+                }
+                else
+                {
+                    progress.AppendLine($":: Creating connection");
+                    var connect = new Entity("connection");
+                    connect["Record1Id".ToLower()] = entity1;
+                    connect["Record1RoleId".ToLower()] = findRole1.First().ToEntityReference();
+                    connect["Record2Id".ToLower()] = entity2;
+                    connect["Record2RoleId".ToLower()] = findRole2.First().ToEntityReference();
+                    var result = service.Create(connect);
+                    progress.AppendLine($"==> DONE");
+                    return result;
+                }
+            }
+            catch (Exception error)
+            {
+                throw new Exception($"#AddConnection:{error.Message}\r\n{progress.ToString()}");
+            }
+        }
+
+        private static bool ProcessConnectionRules(EntityReference entity1, string role1, EntityReference entity2, string role2, IOrganizationService service)
+        {
+            //MyPages connections...
+            if (entity1.LogicalName == "contact" && entity2.LogicalName == "log_installation" ||
+                entity1.LogicalName == "log_installation" && entity2.LogicalName == "contact")
+            {
+                var contactRef = (entity1.LogicalName == "contact" ? entity1 : entity2);
+                var installationRef = (entity2.LogicalName == "log_installation" ? entity2 : entity1);
+                var contactRole = (entity1.LogicalName == "contact" ? role1 : role2);
+                var installationRole = (entity2.LogicalName == "log_installation" ? role2 : role1);
+
+
+                var existingConnection = GetConnection(contactRef, contactRole, installationRef, installationRole, service);
+                var connectionReference = existingConnection.Entities.FirstOrDefault();
+                if (connectionReference != null)
+                {   //do nothing, connection already exist                                     
+                    return false;
+                }
+                //Register new Legal Owner / Pending Legal owner connection (will potentially replace "old" legal owner)
+                if (contactRole == "Legal owner" || contactRole == "Pending Legal owner")
+                {   //remove legal owner from existing contract
+                    var existingConnectionRoleOnInstallation = GetConnectionsOfSpecificRoleForRecord(contactRole, installationRef.Id, service);
+                    if (existingConnectionRoleOnInstallation != null && existingConnectionRoleOnInstallation.Entities.Count > 0)
+                    {
+                        var existingLegalOwnerConnection = existingConnectionRoleOnInstallation.Entities.FirstOrDefault();
+                        var updateLegalOwnerConnection = new Entity("connection");
+                        updateLegalOwnerConnection.Id = existingLegalOwnerConnection.Id;
+                        updateLegalOwnerConnection["record2id"] = contactRef;
+                        service.Update(updateLegalOwnerConnection);
+                        return false; //no creation - only update
+                    }
+                }
+            }
+            return true;
+        }
+
+        public static EntityCollection GetConnection(EntityReference entity1, string role1, EntityReference entity2, string role2, IOrganizationService service)
+        {
+            QueryExpression query = new QueryExpression("connection") { ColumnSet = new ColumnSet(true) };
+            query.Criteria.AddCondition(new ConditionExpression("record1id", ConditionOperator.Equal, entity1.Id));
+            query.Criteria.AddCondition(new ConditionExpression("record1roleidname", ConditionOperator.Equal, role1));
+            query.Criteria.AddCondition(new ConditionExpression("record2id", ConditionOperator.Equal, entity2.Id));
+            query.Criteria.AddCondition(new ConditionExpression("record2roleidname", ConditionOperator.Equal, role2));
+            var allOfSpecificRole = service.RetrieveMultiple(query);
+            return allOfSpecificRole;
+        }
+
+        public static EntityCollection GetConnectionsOfSpecificRoleForRecord(string role, Guid entityID, IOrganizationService service)
+        {
+            //QueryExpression query = new QueryExpression("connection") { ColumnSet = new ColumnSet("record1id", "record1roleidname", "record2id", "record2roleidname") }; // Comment: Using ColumnSet(true) is bad practice as you use more resouces than needed. 
+            QueryExpression query = new QueryExpression("connection") { ColumnSet = new ColumnSet("record1id", "record2id", "record1roleid", "record2roleid", "statecode", "effectiveend", "effectivestart", "name") };
+
+
+            query.Criteria.AddCondition(new ConditionExpression("record1id", ConditionOperator.Equal, entityID)); // Are you really interested in the field ModifedOnBehalfBy for instance?
+            if (!String.IsNullOrEmpty(role))
+            {
+                query.Criteria.AddCondition(new ConditionExpression("record2roleidname", ConditionOperator.Equal, role));
+            }
+            var allOfSpecificRole = service.RetrieveMultiple(query);
+            return allOfSpecificRole;
+        }
+        /// <summary>
+        /// Get all Role(s) for a given entity type.
+        /// </summary>
+        /// <param name="entityname">name of the entity</param>
+        /// <param name="role">The role to fetch. If empty, get all roles.</param>
+        /// <param name="service"></param>
+        /// <returns></returns>
+        static List<Entity> GetRoleOrRolesForEntity(string entityname, string role, IOrganizationService service)
+        {
+            QueryExpression roleQuery = new QueryExpression
+            {
+                EntityName = "connectionrole",
+                ColumnSet = new ColumnSet("connectionroleid", "name"),
+                Distinct = true,
+                LinkEntities =
+                {
+                    new LinkEntity
+                    {
+                        LinkToEntityName = "connectionroleobjecttypecode" ,
+                        LinkToAttributeName = "connectionroleid",
+                        LinkFromEntityName =  "connectionrole",
+                        LinkFromAttributeName = "connectionroleid",
+                        LinkCriteria = new FilterExpression
+                        {
+                            FilterOperator = LogicalOperator.And,
+                            Conditions =
+                            {
+                                new ConditionExpression
+                                {
+                                        AttributeName = "associatedobjecttypecode",
+                                        Operator = ConditionOperator.Equal,
+                                        Values = { GetObjectTypeCode(entityname, service)}
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            if (role.Length > 0)
+                roleQuery.Criteria.AddCondition("name", ConditionOperator.Equal, role);
+            return service.RetrieveMultiple(roleQuery).Entities.ToList();
+        }
+
+        public static int GetObjectTypeCode(string logicalName, IOrganizationService service)
+        {
+            //if (logicalName == "log_livingaddress") return 10117;
+            //else if (logicalName == "contact") return 2;
+            //else if (logicalName == "account") return 1;
+            //else if (logicalName == "log_installation") return 10033;
+            //else if (logicalName == "log_contract") return 10017;
+            //else return QueryTypeCode(logicalName, service);
+            return QueryTypeCode(logicalName, service);
+        }
+
+        static int QueryTypeCode(string logicalName, IOrganizationService service)
+        {
+            var typecode = ViewUtilities.Metadata(logicalName, service)?.ObjectTypeCode;
+            return typecode == null ? throw new Exception($"TypeCode for entity '{logicalName}' not found in metadata.") : (int)typecode;
+        }
+        /// <summary>
+        private static Guid CreateIncomingWithName(OrganizationServiceProxy service, string companyName)
+        {
+            var newLead = new Entity("log_incomingcontract");
+
+            var user = GetUser(service);
+            newLead["log_accountname"] = companyName;
+            //Date cannot be in the future
+            newLead["log_solddate"] = DateTime.Now;
+            newLead["log_street1"] = companyName;
+            newLead["log_installationstreet1"] = companyName;
+            newLead["log_mainphone"] = "45512131";
+            newLead["log_installationpostalcode"] = GetPostCode(service).ToEntityReference();
+            newLead["log_salesperson"] = GetSalesPerson(service).ToEntityReference();
+
+            return service.Create(newLead);
         }
 
         private static Entity GetAccount(OrganizationServiceProxy service)
@@ -114,7 +311,7 @@ namespace LeadProcess
             {
                 ColumnSet = new ColumnSet(true)
             };
-            query.Criteria.AddCondition("accountid", ConditionOperator.Equal, id);
+            query.Criteria.AddCondition("accountid", ConditionOperator.Equal, accountId);
             var resultLise = service.RetrieveMultiple(query);
 
             if (resultLise.Entities.Count == 0)
@@ -152,7 +349,7 @@ namespace LeadProcess
         {
             var query = new QueryExpression("log_contractterm");
             // Norsk test miljø
-            query.Criteria.AddCondition("log_name", ConditionOperator.Equal, "SANO-306-10-15");
+        //    query.Criteria.AddCondition("log_name", ConditionOperator.Equal, "SANO-306-10-15");
             var resultLise = service.RetrieveMultiple(query);
 
             if (resultLise.Entities.Count == 0)
@@ -167,7 +364,7 @@ namespace LeadProcess
             var query = new QueryExpression("log_employee");
      
             //query.Criteria.AddCondition("log_employeenumber", ConditionOperator.Equal, "GS-80064");
-            query.Criteria.AddCondition("log_employeenumber", ConditionOperator.Equal, "NO-61026");
+            //query.Criteria.AddCondition("log_employeenumber", ConditionOperator.Equal, "NO-61026");
             var resultLise = service.RetrieveMultiple(query);
 
             if (resultLise.Entities.Count == 0)
@@ -181,7 +378,7 @@ namespace LeadProcess
         private static Entity GetPostCode(OrganizationServiceProxy service)
         {
             var query = new QueryExpression("log_postcode");
-            query.Criteria.AddCondition("log_name", ConditionOperator.Equal, "1178");
+           // query.Criteria.AddCondition("log_name", ConditionOperator.Equal, "1178");
             var resultLise = service.RetrieveMultiple(query);
 
             if (resultLise.Entities.Count == 0)
@@ -225,16 +422,23 @@ namespace LeadProcess
         private static Entity GetInstallation(OrganizationServiceProxy service)
         {
             var query = new QueryExpression("log_installation");
-            query.Criteria.AddCondition("log_alarmsystemid", ConditionOperator.Equal, "installationid");
             var resultLise = service.RetrieveMultiple(query);
 
-            if (resultLise.Entities.Count == 0)
-                throw new Exception("Entity Not found");
             var post = resultLise.Entities.FirstOrDefault();
             return post;
 
         }
 
+        //Get post code  which number is "1178"
+        //Service degree is full in that area
+        private static Entity GetSaleTYPE(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression("sa_genericreason");
+            var resultLise = service.RetrieveMultiple(query);
+            var post = resultLise.Entities.FirstOrDefault();
+            return post;
+
+        }
         private static Entity GetSMSTemplate(OrganizationServiceProxy service)
         {
             var query = new QueryExpression("log_smstemplate");
@@ -273,14 +477,20 @@ namespace LeadProcess
             newLead["log_salespersonid"] = GetSalesPerson(service).ToEntityReference();
             //street 1
             //newLead["address2_line1"] = "address2 vitaminveien 1, oslo";
-            newLead["log_address2_postalcode"] = GetPostCode(service).ToEntityReference();
-            newLead["log_postalcode"] = GetPostCode(service).ToEntityReference();
+       //     newLead["log_address2_postalcode"] = GetPostCode(service).ToEntityReference();
+            //newLead["log_postalcode"] = GetPostCode(service).ToEntityReference();
             newLead["address1_line1"] = "address1 vitaminveien 1, oslo";
             newLead["log_canoverwritecreditcheck"] = true;
-            newLead["log_takeovercase"] = GetTakdOverCASE(service).ToEntityReference();
-            newLead["log_typeoflead"] = new OptionSetValue(182400002);
+
+            //GetTakdOverCASE
+       //     newLead["log_takeovercase"] = GetTakdOverCASE(service).ToEntityReference();
+            //home
+            newLead["log_typeoflead"] = new OptionSetValue(182400000);
             newLead["log_movefrominstallation"] = GetInstallation(service).ToEntityReference();
             newLead["log_movetoinstallation"] = GetInstallation(service).ToEntityReference();
+
+            //ireland eller spain spesifikk
+           // newLead["sa_salestype"] = GetSaleTYPE(service).ToEntityReference();
             return service.Create(newLead);
         }
 
@@ -349,7 +559,7 @@ namespace LeadProcess
 
             newLead["log_salespersonid"] = GetSalesPerson(service).ToEntityReference();
             //street 1
-            newLead["log_takeovercase"] = GetTakdOverCASE(service).ToEntityReference();
+            //newLead["log_takeovercase"] = GetTakdOverCASE(service).ToEntityReference();
             newLead["log_typeoflead"] = new OptionSetValue(182400002);
             return service.Create(newLead);
         }
@@ -414,11 +624,11 @@ namespace LeadProcess
             entity["log_salespersonid"] = GetSalesPerson(service).ToEntityReference();
             //street 1
             entity["address2_line1"] = "address2 vitaminveien 1, oslo";
-            entity["log_address2_postalcode"] = GetPostCode(service).ToEntityReference();
-            entity["log_postalcode"] = GetPostCode(service).ToEntityReference();
+            //entity["log_address2_postalcode"] = GetPostCode(service).ToEntityReference();
+            //entity["log_postalcode"] = GetPostCode(service).ToEntityReference();
             entity["address1_line1"] = "address1 vitaminveien 1, oslo";
             entity["log_canoverwritecreditcheck"] = true;
-            entity["log_takeovercase"] = GetTakdOverCASE(service).ToEntityReference();
+           // entity["log_takeovercase"] = GetTakdOverCASE(service).ToEntityReference();
             //entity["log_typeofcoverage"] = new OptionSetValue(284390001);
             //entity["log_typeoflead"] = new OptionSetValue(182400002);
             service.Update(entity);
@@ -478,7 +688,7 @@ namespace LeadProcess
         public static void RunQueryAndGetDictionary(OrganizationServiceProxy service)
         {
             var qWorkorder = new QueryExpression("log_workorders");// {  ColumnSet = new ColumnSet("workordertype") };
-            qWorkorder.Criteria.AddCondition("log_installationid", ConditionOperator.Equal, id);
+            qWorkorder.Criteria.AddCondition("log_installationid", ConditionOperator.Equal, accountId);
 
             qWorkorder.ColumnSet = new ColumnSet("log_typeofworkorder", "statuscode");
             var getTargetWithType = service.RetrieveMultiple(qWorkorder).Entities;

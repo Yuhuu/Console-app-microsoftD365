@@ -15,11 +15,10 @@ namespace LeadProcess
     public class ProgramApproveWO
     {
 
-
-        public const string accountName = LeadProcess.companyName;
+     
         public static void Run(OrganizationServiceProxy service)
     {
-
+             string accountName = DateTime.Now.ToShortTimeString();
             Guid id = CreateWO(service, accountName);
             AddProductWithTypeHardware(service, id);
             AddProductWithTypeContract(service, id);
@@ -43,6 +42,7 @@ namespace LeadProcess
 
         private static Entity GetAccount(OrganizationServiceProxy service)
         {
+            string accountName = DateTime.Now.ToShortTimeString();
             var query = new QueryExpression("account");
             query.Criteria.AddCondition("name", ConditionOperator.Equal, accountName);
             var resultLise = service.RetrieveMultiple(query);
