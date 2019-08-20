@@ -10,6 +10,7 @@ using ConsoleAppCsharp.ConsoleApp1;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk.Query;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace LeadProcess
@@ -51,11 +52,15 @@ namespace LeadProcess
             //    var addService = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
             //    organizationList.Add(addService);
             //}
-            var country = "NO";
-            var service = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
 
+            //Test enviroment
+            //var country = "NO";
+            //var service = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+
+            //Here is service FOR PROD Norway
+            var service = new OrganizationServiceProxy(new Uri("https://intmscrm.sectoralarm.net/SectorAlarmNO/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
             //Here is service FOR PROD
-            //var service = new OrganizationServiceProxy(new Uri("https://intmscrm.sectoralarm.net/SectorAlarmNO/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+          //  var service = new OrganizationServiceProxy(new Uri("https://intmscrm.sectoralarm.net/SectorAlarmSE/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
             //var qAccount = new QueryExpression("account");
             //qAccount.Criteria.AddCondition("adsasdf", ConditionOperator.Equal, "something");
             //var getAccount = service.RetrieveMultiple(qAccount).Entities;
@@ -79,7 +84,7 @@ namespace LeadProcess
             //Test this in  test
             string timeString = DateTime.Now.ToShortTimeString();
             string companyName = "created : " + timeString;
-            Guid id = CreateLeadWithName(service, companyName);
+           // Guid id = CreateLeadWithName(service, companyName);
 
         
             //Guid id2 = CreateIncomingWithName(service, companyName);
@@ -107,11 +112,11 @@ namespace LeadProcess
             }
 
             //QualifyLeadWithMovingOut(service, id);
-            EntityReference role1EntityRef= null;
-            String Role1RoleName = "Legal owner";
-            EntityReference role2EntityRef = null;
-            String Role2RoleName = "Installation";
-            var newConnectionId = AddConnection(role1EntityRef, Role1RoleName, role2EntityRef, Role2RoleName, service);
+            //EntityReference role1EntityRef = GetAccount(service).ToEntityReference();
+            //string Role1RoleName = "Legal owner";
+            //EntityReference role2EntityRef = GetInstallationWithAlarmSystemId(service).ToEntityReference();
+            //string Role2RoleName = "Installation";
+            //var newConnectionId = AddConnection(role1EntityRef, Role1RoleName, role2EntityRef, Role2RoleName, service);
             //UpdateLead(service, id);
 
             //ProgramFetchQuery.Run(service);
@@ -121,7 +126,7 @@ namespace LeadProcess
             //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
             //ProgramFetchXMLPagingCookies.Run(service);
 
-
+            int count = GetCountInstallationWithAlarmSystemId(service);
         }
 
         private static Guid AddConnection(EntityReference entity1, string role1, EntityReference entity2, string role2, OrganizationServiceProxy service)
@@ -271,6 +276,18 @@ namespace LeadProcess
             return service.RetrieveMultiple(roleQuery).Entities.ToList();
         }
 
+        public static int GetSameSystemID(IOrganizationService service)
+        {
+            QueryExpression roleQuery = new QueryExpression
+            {
+                EntityName = "connectionrole",
+                ColumnSet = new ColumnSet("connectionroleid", "name"),
+                Distinct = true
+               
+            };
+            return service.RetrieveMultiple(roleQuery).Entities.ToList().Count();
+        }
+
         public static int GetObjectTypeCode(string logicalName, IOrganizationService service)
         {
             //if (logicalName == "log_livingaddress") return 10117;
@@ -306,6 +323,23 @@ namespace LeadProcess
         }
 
         private static Entity GetAccount(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression("account")
+            {
+                ColumnSet = new ColumnSet(true)
+            };
+            query.Criteria.AddCondition("accountid", ConditionOperator.Equal, accountId);
+            var resultLise = service.RetrieveMultiple(query);
+
+            if (resultLise.Entities.Count == 0)
+                throw new Exception("Entity Not found");
+            var account = resultLise.Entities.FirstOrDefault();
+            return account;
+
+        }
+
+
+        private static Entity GetAccountContact(OrganizationServiceProxy service)
         {
             var query = new QueryExpression("account")
             {
@@ -427,6 +461,42 @@ namespace LeadProcess
             var post = resultLise.Entities.FirstOrDefault();
             return post;
 
+        }
+
+        private static Entity GetInstallationWithAlarmSystemId(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression("log_installation");
+            query.Criteria.AddCondition("log_hardwareid", ConditionOperator.Contains);
+            query.Criteria.AddCondition("log_alarmsystemid", ConditionOperator.Contains);
+            var resultLise = service.RetrieveMultiple(query);
+
+            var installation = resultLise.Entities.FirstOrDefault();
+            return installation;
+        }
+
+        private static int GetCountInstallationWithAlarmSystemId(OrganizationServiceProxy service)
+        {
+            var query = new QueryExpression
+            {
+                EntityName = "log_installation",
+                ColumnSet = new ColumnSet("log_hardwareid2", "log_hardwareid", "log_alarmsystemid")
+            }; 
+            FilterExpression filter = new FilterExpression(LogicalOperator.And);
+            filter.AddCondition("log_hardwareid", ConditionOperator.NotNull);
+            filter.AddCondition("log_alarmsystemid", ConditionOperator.NotNull);
+            filter.AddCondition("log_hardwareid2", ConditionOperator.NotNull);
+            query.Criteria = filter;
+            //    query.Criteria.AddCondition("log_alarmsystemid", ConditionOperator.Contains);
+            var resultLise = service.RetrieveMultiple(query);
+            foreach (var c in resultLise.Entities)
+            {
+
+                var jsonString = JsonConvert.SerializeObject(c);
+                Debug.WriteLine(jsonString.ToString());
+            }
+            var count = resultLise.Entities.Count();
+            Debug.WriteLine(count.ToString());
+            return count;
         }
 
         //Get post code  which number is "1178"
