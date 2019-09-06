@@ -33,7 +33,7 @@ namespace LeadProcess
         //public const string id = "AFBA2387-B633-E711-80CB-005056A6C323";
         //public const string companyName = uiname="A AH ALSAHOO, FAHADs" 
         //accountID i Es test
-        public const string accountId = "A2DCA4DF-85BA-E711-80DA-005056A67C5E";
+        public const string accountId = "406f4f52-e4de-e511-bd38-e41f13be0af4";
 
         public static void Main(string[] args)
         {
@@ -44,14 +44,14 @@ namespace LeadProcess
             //playground
             //  var service = new OrganizationServiceProxy(new Uri("https://intmscrmtst.sectoralarm.net/SectorAlarmfrtstPLAYGROUND/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
             //DEV
-            //var organizationList = new List<IOrganizationService>();
+            var organizationList = new List<IOrganizationService>();
 
-            //var countryList = new List<string>() { "NO", "SE", "FI", "ES", "IE", "FR" };
-            //foreach (var country in countryList)
-            //{
-            //    var addService = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
-            //    organizationList.Add(addService);
-            //}
+            var countryList = new List<string>() { "NO", "SE", "FI", "ES", "IE", "FR" };
+            foreach (var country in countryList)
+            {
+                var addService = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+                organizationList.Add(addService);
+            }
 
             //Test enviroment
             //var country = "NO";
@@ -59,7 +59,7 @@ namespace LeadProcess
 
             //Here is service FOR PROD Norway
             var service = new OrganizationServiceProxy(new Uri("https://intmscrm.sectoralarm.net/SectorAlarmNO/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
-            //Here is service FOR PROD
+            //Here is service FOR PROD Sweden
           //  var service = new OrganizationServiceProxy(new Uri("https://intmscrm.sectoralarm.net/SectorAlarmSE/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
             //var qAccount = new QueryExpression("account");
             //qAccount.Criteria.AddCondition("adsasdf", ConditionOperator.Equal, "something");
@@ -68,17 +68,44 @@ namespace LeadProcess
 
             var alocalZone = TimeZoneInfo.Local;
             var throwALl = new StringBuilder();
-            //throwALl.AppendLine($"Local:{alocalZone}");
+           // throwALl.AppendLine($"Local:{alocalZone}");
             var throwThis = TimeZoneInfo.GetSystemTimeZones();
             //throwALl.AppendLine($"'My' system: {TimeZoneInfo.GetSystemTimeZones();}");
-
-            //foreach (var org in organizationList)
-            //{
-            //    var alocalZone1 = TimeZoneInfo.Local;
-            //    var throwALl1 = new StringBuilder();
-            //    throwALl.AppendLine($"Local:{alocalZone1}");
-            //}
-
+            string ExpectedDateTimePattern = "yyyy'-'MM'-'dd'T'HH':'mm':'ss''zzz";
+            foreach (var org in organizationList)
+            {
+                var throwALl1 = new StringBuilder();
+                //get timezone fra config for timezone
+                Entity conf = new Entity("log_configuration");
+                var qe = new QueryExpression("log_configuration") { ColumnSet = new ColumnSet() };
+                qe.ColumnSet.Columns.Add("sa_timezone");
+                var configuration = org.RetrieveMultiple(qe).Entities.First();
+                string timezone = configuration.GetAttributeValue<string>("sa_timezone");
+                if (timezone == null || timezone.Length.Equals(0))
+                {
+                    throw new InvalidPluginExecutionException("Failed to get property timezone.");
+                }
+                TimeZoneInfo crmZone = TimeZoneInfo.FindSystemTimeZoneById(timezone);
+                var timeUtc = DateTime.UtcNow;
+                DateTime realtime = TimeZoneInfo.ConvertTimeFromUtc(timeUtc, crmZone);
+                //Here we removed tolocaltime cause we dont care about the localtime now
+                var countryTime = realtime.ToString(ExpectedDateTimePattern);
+                var alocalZone2 = crmZone.DaylightName;
+                //throwall.appendline($"timeutc:{timeutc.toshorttimestring()}");
+                //throwALl.AppendLine($"Time Local:{TimeZoneInfo.ConvertTimeFromUtc(timeUtc, TimeZoneInfo.Local).ToShortTimeString()}");
+   
+                var index = organizationList.IndexOf(org);
+                throwALl.AppendLine($"------------------------------------------------");
+                //                TimeZoneInfo cstZone = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
+                //DateTime cstTime = TimeZoneInfo.ConvertTimeFromUtc(timeUtc, cstZone);
+                throwALl.AppendLine($"The date and time are {realtime} {crmZone.IsDaylightSavingTime(realtime)}.");
+                throwALl.AppendLine($"CRM country Name:{countryList.ElementAt(index)}");
+                throwALl.AppendLine($"CRM country no daylightsaving:{crmZone}");
+                throwALl.AppendLine($"CRM country:{alocalZone2}");
+                throwALl.AppendLine($"CRM country time:{countryTime}");
+            }
+            Debug.WriteLine(throwALl);
+            Debug.WriteLine(throwALl.ToString());
             //throw new Exception(throwALl.ToString());
 
             //Test this in  test
@@ -124,9 +151,9 @@ namespace LeadProcess
             //ProgramFetchXMLPagingCookies.RunQueryExpression(service);
             //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
             //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
-            //ProgramFetchXMLPagingCookies.Run(service);
+            ProgramFetchXMLPagingCookies.Run(service);
 
-            int count = GetCountInstallationWithAlarmSystemId(service);
+           // int count = GetCountInstallationWithAlarmSystemId(service);
         }
 
         private static Guid AddConnection(EntityReference entity1, string role1, EntityReference entity2, string role2, OrganizationServiceProxy service)
