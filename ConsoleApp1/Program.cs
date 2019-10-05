@@ -66,47 +66,6 @@ namespace LeadProcess
             //var getAccount = service.RetrieveMultiple(qAccount).Entities;
             //var thisAccount = getAccount.First();
 
-            var alocalZone = TimeZoneInfo.Local;
-            var throwALl = new StringBuilder();
-           // throwALl.AppendLine($"Local:{alocalZone}");
-            var throwThis = TimeZoneInfo.GetSystemTimeZones();
-            //throwALl.AppendLine($"'My' system: {TimeZoneInfo.GetSystemTimeZones();}");
-            string ExpectedDateTimePattern = "yyyy'-'MM'-'dd'T'HH':'mm':'ss''zzz";
-            foreach (var org in organizationList)
-            {
-                var throwALl1 = new StringBuilder();
-                //get timezone fra config for timezone
-                Entity conf = new Entity("log_configuration");
-                var qe = new QueryExpression("log_configuration") { ColumnSet = new ColumnSet() };
-                qe.ColumnSet.Columns.Add("sa_timezone");
-                var configuration = org.RetrieveMultiple(qe).Entities.First();
-                string timezone = configuration.GetAttributeValue<string>("sa_timezone");
-                if (timezone == null || timezone.Length.Equals(0))
-                {
-                    throw new InvalidPluginExecutionException("Failed to get property timezone.");
-                }
-                TimeZoneInfo crmZone = TimeZoneInfo.FindSystemTimeZoneById(timezone);
-                var timeUtc = DateTime.UtcNow;
-                DateTime realtime = TimeZoneInfo.ConvertTimeFromUtc(timeUtc, crmZone);
-                //Here we removed tolocaltime cause we dont care about the localtime now
-                var countryTime = realtime.ToString(ExpectedDateTimePattern);
-                var alocalZone2 = crmZone.DaylightName;
-                //throwall.appendline($"timeutc:{timeutc.toshorttimestring()}");
-                //throwALl.AppendLine($"Time Local:{TimeZoneInfo.ConvertTimeFromUtc(timeUtc, TimeZoneInfo.Local).ToShortTimeString()}");
-   
-                var index = organizationList.IndexOf(org);
-                throwALl.AppendLine($"------------------------------------------------");
-                //                TimeZoneInfo cstZone = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
-                //DateTime cstTime = TimeZoneInfo.ConvertTimeFromUtc(timeUtc, cstZone);
-                throwALl.AppendLine($"The date and time are {realtime} {crmZone.IsDaylightSavingTime(realtime)}.");
-                throwALl.AppendLine($"CRM country Name:{countryList.ElementAt(index)}");
-                throwALl.AppendLine($"CRM country no daylightsaving:{crmZone}");
-                throwALl.AppendLine($"CRM country:{alocalZone2}");
-                throwALl.AppendLine($"CRM country time:{countryTime}");
-            }
-            Debug.WriteLine(throwALl);
-            Debug.WriteLine(throwALl.ToString());
-            //throw new Exception(throwALl.ToString());
 
             //Test this in  test
             string timeString = DateTime.Now.ToShortTimeString();
@@ -118,7 +77,6 @@ namespace LeadProcess
             ///CreateSMSWithName(service, companyName);
             //QualifyLead(service, id);
             //Guid id = CreateLeadWithSimpleinfor(service, companyName);
-
             //TODO : for setting in more
 
             int loopnumber = 120;
@@ -151,10 +109,19 @@ namespace LeadProcess
             //ProgramFetchXMLPagingCookies.RunQueryExpression(service);
             //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
             //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
-            ProgramFetchXMLPagingCookies.Run(service);
+            //ProgramFetchXMLPagingCookies.Run(service);
+            ProgramFetchXMLForTask.Run(service);
 
            // int count = GetCountInstallationWithAlarmSystemId(service);
         }
+
+        private string  DisplayDateWithTimeZoneName(DateTime date1, TimeZoneInfo timeZone)
+        {
+
+            return timeZone.IsDaylightSavingTime(date1) ?
+                                  timeZone.DaylightName : timeZone.StandardName;
+        }
+        // The example displays output similar to the following:
 
         private static Guid AddConnection(EntityReference entity1, string role1, EntityReference entity2, string role2, OrganizationServiceProxy service)
         {
@@ -933,5 +900,51 @@ namespace LeadProcess
             }
             return list;
         }
+
+        private void RunTimezone(List<IOrganizationService> organizationList, List<string> countryList) {
+
+            var alocalZone = TimeZoneInfo.Local;
+            var throwALl = new StringBuilder();
+            // throwALl.AppendLine($"Local:{alocalZone}");
+            var throwThis = TimeZoneInfo.GetSystemTimeZones();
+            //throwALl.AppendLine($"'My' system: {TimeZoneInfo.GetSystemTimeZones();}");
+            string ExpectedDateTimePattern = "yyyy'-'MM'-'dd' Time: 'HH':'mm':'ss";
+            foreach (var org in organizationList)
+            {
+                var throwALl1 = new StringBuilder();
+                //get timezone from usersetting config 
+                Entity conf = new Entity("log_configuration");
+                var qe = new QueryExpression("log_configuration") { ColumnSet = new ColumnSet() };
+                qe.ColumnSet.Columns.Add("sa_timezone");
+                var configuration = org.RetrieveMultiple(qe).Entities.First();
+                string timezone = configuration.GetAttributeValue<string>("sa_timezone");
+                if (timezone == null || timezone.Length.Equals(0))
+                {
+                    throw new InvalidPluginExecutionException("Failed to get property timezone.");
+                }
+                TimeZoneInfo crmZone = TimeZoneInfo.FindSystemTimeZoneById(timezone);
+                var timeUtc = DateTime.UtcNow.AddMonths(2);
+                //converting date from UTC to user time zone
+                DateTime cstTime = TimeZoneInfo.ConvertTimeFromUtc(timeUtc, crmZone);
+                //Here we removed tolocaltime cause we dont care about the localtime now
+                var countryTime = cstTime.ToString(ExpectedDateTimePattern);
+                var alocalZone2 = crmZone.DaylightName;
+                //throwall.appendline($"timeutc:{timeutc.toshorttimestring()}");
+                //throwALl.AppendLine($"Time Local:{TimeZoneInfo.ConvertTimeFromUtc(timeUtc, TimeZoneInfo.Local).ToShortTimeString()}");
+
+                var index = organizationList.IndexOf(org);
+                throwALl.AppendLine($"------------------------------------------------");
+                //                TimeZoneInfo cstZone = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time");
+                //DateTime cstTime = TimeZoneInfo.ConvertTimeFromUtc(timeUtc, cstZone);
+                throwALl.AppendLine($"The date and time are {cstTime} {crmZone.IsDaylightSavingTime(cstTime)}.");
+                throwALl.AppendLine($"CRM country Name:{countryList.ElementAt(index)}");
+                throwALl.AppendLine($"CRM country no DaylightName:{crmZone.StandardName}");
+                throwALl.AppendLine($"CRM country DaylightName:{alocalZone2}");
+                throwALl.AppendLine($"CRM country time:{countryTime}");
+            }
+            Debug.WriteLine(throwALl);
+            Debug.WriteLine(throwALl.ToString());
+            //throw new Exception(throwALl.ToString());}
+        }
     }
-}
+    }

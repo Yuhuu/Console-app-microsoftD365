@@ -19,7 +19,7 @@ using Newtonsoft.Json.Linq;
 
 namespace LeadProcess
 {
-    public class ProgramFetchXMLPagingCookies
+    public class ProgramFetchXMLForTask
     {
         //This is contract ID
         //public static String id = "4D1C4BAA-E98B-E711-80D9-005056A67C5E"; Spain test
@@ -152,71 +152,8 @@ namespace LeadProcess
                    "    </link-entity>" +
                    "  </entity>" +
                    "</fetch>";
-           //activities for task
-           var activitiesForTaskXML = "<fetch distinct=\"true\" >" +
-                    "  <entity name=\"account\" >" +
-                    "    <filter>" +
-                    "      <condition attribute=\"accountid\" operator=\"eq\" value = \"{" + id + "}\" />" +
-                    "    </filter>" +
-                    "    <link-entity name=\"task\" from=\"log_account\" to=\"accountid\" link-type=\"outer\" >" +
-                    "      <attribute name=\"activityid\" />" +
-                    "      <attribute name=\"subject\" />" +
-                    "      <link-entity name=\"activitypointer\" from=\"activityid\" to=\"activityid\" link-type=\"inner\" alias=\"activity\" >" +
-                    "        <attribute name=\"createdon\" />" +
-                    "        <attribute name=\"activityid\" />" +
-                    "        <attribute name=\"modifiedon\" />" +
-                    "        <attribute name=\"statecode\" />" +
-                    "        <attribute name=\"subject\" />" +
-                    "        <attribute name=\"activityadditionalparams\" />" +
-                    "        <attribute name=\"activitytypecode\" />" +
-                    "        <attribute name=\"description\" />" +
-                    "        <attribute name=\"createdby\" />" +
-                    "        <attribute name=\"modifiedby\" />" +
-                    "        <attribute name=\"actualend\" />" +
-                    "        <attribute name=\"scheduledend\" />" +
-                    "        <attribute name=\"regardingobjectid\" />" +
-                    "        <filter>" +
-                    openFilter +
-                    "          <condition attribute=\"regardingobjectid\" operator=\"neq\" value=\"03F0C8D1-34BC-4D93-9CBC-0DE87AE32449\" />" +
-                    "        </filter>" +
-                    "        <link-entity name=\"systemuser\" from=\"systemuserid\" to=\"createdby\" alias=\"createdby\" >" +
-                    "          <attribute name=\"fullname\" />" +
-                    "        </link-entity>" +
-                    "        <link-entity name=\"systemuser\" from=\"systemuserid\" to=\"modifiedby\" alias=\"modifiedby\" >" +
-                    "          <attribute name=\"fullname\" />" +
-                    "        </link-entity>" +
-                    "      </link-entity>" +
-                    "    </link-entity>" +
-                    "  </entity>" +
-                    "</fetch>";
 
-            //count for task and lead
-            var fetchPagingTask = "<fetch distinct=\"true\" mapping=\"logical\" aggregate=\"true\">" +
-                    "  <entity name=\"account\" >" +
-                    "    <filter>" +
-                    "      <condition attribute=\"accountid\" operator=\"eq\" value=\"" + id + "\" />" +
-                    "    </filter>" +
-                    "    <link-entity name=\"task\" from=\"log_account\" to=\"accountid\" link-type=\"outer\" >" +
-                    "      <link-entity name=\"activitypointer\" from=\"activityid\" to=\"activityid\" link-type=\"inner\" alias=\"activity\" >" +
-                    "        <attribute name =\"activityid\" aggregate=\"countcolumn\" alias=\"OKmodifiedon\" distinct=\"true\" />" +
-                    "        <filter>" +
-                    openFilter +
-                    "          <condition attribute=\"regardingobjectid\" operator=\"neq\" value=\"03F0C8D1-34BC-4D93-9CBC-0DE87AE32449\" />" +
-                    "        </filter>" +
-                    "      </link-entity>" +
-                    "    </link-entity>" +
-                  "    <link-entity name=\"lead\" from=\"log_newaccount\" to=\"accountid\" link-type=\"outer\" >" +
-                  "      <link-entity name=\"activityparty\" from=\"partyid\" to=\"leadid\" link-type=\"outer\" >" +
-                  "        <link-entity name=\"activitypointer\" from=\"activityid\" to=\"activityid\" link-type=\"inner\" alias=\"activity\" >" +
-                  "           <attribute name =\"activityid\" aggregate=\"countcolumn\" alias=\"OKmodifiedon\" distinct=\"true\" />" +
-                  "          <filter>" +
-                       openFilter +
-                  "          </filter>" +
-                  "        </link-entity>" +
-                  "      </link-entity>" +
-                  "    </link-entity>" +
-                    "  </entity>" +
-                    "</fetch>";
+
 
             //count all activities which realted to account
             var fetchcountXMLAll = "<fetch distinct=\"true\" mapping=\"logical\" aggregate=\"true\">" +
@@ -408,7 +345,7 @@ namespace LeadProcess
             {
                 string allActivitiesXML = CreateXml(fetchPagingActivityMainEntity, pagingCookie, pageNumber, fetchCount);
 
-                EntityCollection result = service.RetrieveMultiple(new FetchExpression(activitiesForTaskXML));
+                EntityCollection result = service.RetrieveMultiple(new FetchExpression(allActivitiesXML));
                 Debug.WriteLine(result);
                 foreach (var c in result.Entities)
                 {
