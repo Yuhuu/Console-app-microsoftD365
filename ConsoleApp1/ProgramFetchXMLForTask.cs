@@ -345,7 +345,7 @@ namespace LeadProcess
             {
                 string allActivitiesXML = CreateXml(fetchPagingActivityMainEntity, pagingCookie, pageNumber, fetchCount);
 
-                EntityCollection result = service.RetrieveMultiple(new FetchExpression(allActivitiesXML));
+                EntityCollection result = service.RetrieveMultiple(new FetchExpression(fetchPaging4));
                 Debug.WriteLine(result);
                 foreach (var c in result.Entities)
                 {
@@ -357,6 +357,7 @@ namespace LeadProcess
 
                 if (result.MoreRecords)
                 {
+                    Debug.WriteLine("\n****************Count for lead****************");
                     Debug.WriteLine("\n****************\nPage number {0}\n****************", pageNumber);
 
                     // Increment the page number to retrieve the next page.
