@@ -49,7 +49,7 @@ namespace LeadProcess
         //norge test Abbas Marofi
 
         //    Norway prod
-        public static String id = "406f4f52-e4de-e511-bd38-e41f13be0af4";
+        public static String id = "5106E9DC-E282-4D7F-BAED-00AFFB061FAB";
 
         //no test with duplicated lead
         //public static string id = "AD22C2D1-CC34-E711-80D4-005056A6241E";
@@ -120,7 +120,7 @@ namespace LeadProcess
             var activitiesCase = "<fetch distinct=\"true\" >" +
                    "  <entity name=\"account\" >" +
                    "    <filter>" +
-                   "      <condition attribute=\"accountid\" operator=\"eq\" value=\"" + id + "\" />" +
+                   //"      <condition attribute=\"accountid\" operator=\"eq\" value=\"" + id + "\" />" +
                    "    </filter>" +
                    "    <link-entity name=\"incident\" from=\"accountid\" to=\"accountid\" link-type=\"outer\" >" +
                    "      <link-entity name=\"activityparty\" from=\"partyid\" to=\"incidentid\" link-type=\"outer\" >" +
@@ -139,7 +139,7 @@ namespace LeadProcess
                    "          <attribute name=\"scheduledend\" />" +
                    "          <attribute name=\"regardingobjectid\" />" +
                    "          <filter>" +
-                   openFilter +
+              //     openFilter +
                    "          </filter>" +
                    "          <link-entity name=\"systemuser\" from=\"systemuserid\" to=\"createdby\" alias=\"createdby\" >" +
                    "            <attribute name=\"fullname\" />" +
@@ -406,7 +406,7 @@ namespace LeadProcess
             var sw = Stopwatch.StartNew();
             while (true)
             {
-                string allActivitiesXML = CreateXml(fetchPagingActivityMainEntity, pagingCookie, pageNumber, fetchCount);
+                string allActivitiesXML = CreateXml(activitiesCase, pagingCookie, pageNumber, fetchCount);
 
                 EntityCollection result = service.RetrieveMultiple(new FetchExpression(activitiesForTaskXML));
                 Debug.WriteLine(result);
@@ -432,7 +432,7 @@ namespace LeadProcess
                 else
                 {
                     Debug.WriteLine("\n****************\nPage number {0}\n****************", pageNumber);
-                    Debug.WriteLine("fetchPagingWithDuplicates Activities Total record {0}", recordCount);
+                    Debug.WriteLine("activitiesCase Activities Total record {0}", recordCount);
                     sw.Stop();
                     TimeSpan time = sw.Elapsed;
                     Debug.WriteLine(time.ToString());
@@ -441,6 +441,7 @@ namespace LeadProcess
 
                 }
             }
+
             sw = Stopwatch.StartNew();
 
 
@@ -733,7 +734,47 @@ namespace LeadProcess
                 }
             }
         }
-            public static void RunQueryExpressionXML(OrganizationServiceProxy service)
+
+        public static void RunQueryRobotics(OrganizationServiceProxy service)
+        {
+
+
+
+            // Initialize the number of records.
+            int recordCount = 0;
+            var fetchFromAccount = "<fetch distinct=\"true\" mapping=\"logical\" >" +
+                    "  <entity name=\"activitypointer\" >" +
+                    "  <filter type=\"and\" >" +
+                    "   <condition attribute=\"activitytypecode\" operator=\"neq\" value=\"4401\" />" + //4401 - campaignresponse--
+                    "  </filter>" +
+                    "        <attribute name=\"activitytypecode\" />" +
+                    "        <attribute name=\"activityid\" />" +
+                    "<filter type=\"and\" >" +
+                    "      <condition attribute = \"accountid\" entityname = \"au\" operator = \"eq\" uitype = \"account\" value = \"{" + id + "}\" />" +
+                    "</filter>" +
+                    " <link-entity name=\"activityparty\" from=\"activityid\" to=\"activityid\" alias=\"at\" distinct=\"true\" >" +
+                    "     <link-entity name=\"account\" from=\"accountid\" to=\"partyid\" alias=\"au\" link-type=\"outer\" />" +
+                    "</link-entity>" +
+                    "  </entity>" +
+                    "</fetch>";
+
+
+            EntityCollection result = service.RetrieveMultiple(new FetchExpression(fetchFromAccount));
+            foreach (var c in result.Entities)
+            {
+
+                var jsonString = JsonConvert.SerializeObject(c);
+                Debug.WriteLine(jsonString.ToString());
+                recordCount++;
+            }
+
+
+            Debug.WriteLine("fetchPaging2 Activities Total record {0}", recordCount);
+
+
+        }
+
+        public static void RunQueryExpressionXML333(OrganizationServiceProxy service)
         {
 
             // Query using the paging cookie.
@@ -746,7 +787,7 @@ namespace LeadProcess
 
             // Initialize the number of records.
             int recordCount = 0;
-
+        int fetchCount = 399;
             //REWRITE query
             var queryPointer = new QueryExpression("activitypointer");
             // queryAccount.ColumnSet = new ColumnSet(false);

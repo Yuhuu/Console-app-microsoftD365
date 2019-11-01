@@ -162,6 +162,7 @@
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConsoleApp1\ProgramFetchXMLForTask.cs" />
     <Compile Include="ConsoleApp1\ViewUtilities.cs" />
     <Compile Include="ConsoleApp1\Program.cs" />
     <Compile Include="ConsoleApp1\ProgramApproveWO.cs" />

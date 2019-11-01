@@ -47,20 +47,20 @@ namespace LeadProcess
             var organizationList = new List<IOrganizationService>();
 
             var countryList = new List<string>() { "NO", "SE", "FI", "ES", "IE", "FR" };
-            foreach (var country in countryList)
-            {
-                var addService = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
-                organizationList.Add(addService);
-            }
+            //foreach (var country in countryList)
+            //{
+            //    var addService = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+            //    organizationList.Add(addService);
+            //}
 
             //Test enviroment
-            //var country = "NO";
-            //var service = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+            var country = "fr";
+            var service = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
 
             //Here is service FOR PROD Norway
-            var service = new OrganizationServiceProxy(new Uri("https://intmscrm.sectoralarm.net/SectorAlarmNO/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+            //var service = new OrganizationServiceProxy(new Uri("https://intmscrm.sectoralarm.net/SectorAlarmNO/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
             //Here is service FOR PROD Sweden
-          //  var service = new OrganizationServiceProxy(new Uri("https://intmscrm.sectoralarm.net/SectorAlarmSE/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
+            //  var service = new OrganizationServiceProxy(new Uri("https://intmscrm.sectoralarm.net/SectorAlarmSE/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
             //var qAccount = new QueryExpression("account");
             //qAccount.Criteria.AddCondition("adsasdf", ConditionOperator.Equal, "something");
             //var getAccount = service.RetrieveMultiple(qAccount).Entities;
@@ -109,10 +109,11 @@ namespace LeadProcess
             //ProgramFetchXMLPagingCookies.RunQueryExpression(service);
             //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
             //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
-            //ProgramFetchXMLPagingCookies.Run(service);
-            ProgramFetchXMLForTask.Run(service);
+            ProgramFetchXMLPagingCookies.Run(service);
+            //ProgramFetchXMLPagingCookies.RunQueryRobotics(service);
+            // ProgramFetchXMLForTask.Run(service);
 
-           // int count = GetCountInstallationWithAlarmSystemId(service);
+            // int count = GetCountInstallationWithAlarmSystemId(service);
         }
 
         private string  DisplayDateWithTimeZoneName(DateTime date1, TimeZoneInfo timeZone)
