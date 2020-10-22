@@ -773,6 +773,77 @@ namespace LeadProcess
 
 
         }
+        public static void RunQueryExpressionFraAsgeir(OrganizationServiceProxy service)
+        {
+            var sw = Stopwatch.StartNew();
+            var accountID = new Guid("5106E9DC-E282-4D7F-BAED-00AFFB061FAB");
+
+            var queryPointer = new QueryExpression("activitypointer") { ColumnSet = new ColumnSet("activitytypecode") };
+            var LinkEntry = queryPointer.AddLink("activityparty", "activityid", "activityid");
+            var LlinkEntry1 = LinkEntry.AddLink("account", "partyid", "accountid");
+            LlinkEntry1.LinkCriteria.AddCondition("accountid", ConditionOperator.Equal, accountID);
+
+            //queryPointer.AddLink("activityparty", "activityid", "activityid");
+            //queryPointer.LinkEntities[0].LinkCriteria.AddCondition("partyid", ConditionOperator.Equal, req.AccountID);    
+            var getActivities = service.RetrieveMultiple(queryPointer).Entities;
+            //if (getActivities.Error != null)
+            //    throw new Exception("Fail in activitiesExp: " + getActivities.Error);
+
+            var taskq = new QueryExpression("activitypointer") { ColumnSet = new ColumnSet("activitytypecode") };
+            var tLinkEntry = taskq.AddLink("activityparty", "activityid", "activityid", JoinOperator.Natural);
+            var tLlinkEntry1 = tLinkEntry.AddLink("task", "activityid", "activityid", JoinOperator.Natural);
+            tLlinkEntry1.LinkCriteria.AddCondition("log_account", ConditionOperator.Equal, accountID);
+            var getTasks = service.RetrieveMultiple(taskq).Entities;
+            //var getTasks = service.Query(taskq);
+            //if (getTasks.Error != null)
+            //    throw new Exception("Fail in activitiesExp: " + getTasks.Error);
+            var tdistinctCollection = new List<Entity>();
+
+            var caseq = new QueryExpression("activitypointer") { ColumnSet = new ColumnSet("activitytypecode") };
+            var cLinkEntry = caseq.AddLink("activityparty", "activityid", "activityid");
+            var cLlinkEntry1 = cLinkEntry.AddLink("incident", "partyid", "incidentid");
+            cLlinkEntry1.LinkCriteria.AddCondition("accountid", ConditionOperator.Equal, accountID);
+            var getCases = service.RetrieveMultiple(caseq).Entities;
+            //if (getCases.Error != null)
+            //    throw new Exception("Fail in activitiesExp: " + getCases.Error);
+            var cdistinctCollection = new List<Entity>();
+
+            var leadq = new QueryExpression("activitypointer") { ColumnSet = new ColumnSet("activitytypecode") };
+            var lLinkEntry = leadq.AddLink("activityparty", "activityid", "activityid");
+            var lLlinkEntry1 = lLinkEntry.AddLink("lead", "partyid", "leadid");
+            lLlinkEntry1.LinkCriteria.AddCondition("log_newaccount", ConditionOperator.Equal, accountID);
+            var getLead = service.RetrieveMultiple(leadq).Entities;
+            //if (getCases.Error != null)
+            //if (getLead.Error != null)
+            //    throw new Exception("Fail in activitiesExp: " + getLead.Error);
+
+            var distinctCollection = new List<Entity>();
+            var ActivityCollection = new List<Entity>();
+            distinctCollection.AddRange(getActivities);
+            distinctCollection.AddRange(getTasks);
+            distinctCollection.AddRange(getLead);
+            distinctCollection.AddRange(getCases);
+
+            foreach (var item in distinctCollection)
+            {
+                if (ActivityCollection.FirstOrDefault(z => z.GetAttributeValue<Guid>("activityid") == item.GetAttributeValue<Guid>("activityid")) == null)
+                    ActivityCollection.Add(item);
+            }
+            sw.Stop();
+           var recordCount = 0;
+            foreach (var c in ActivityCollection)
+            {
+
+                var jsonString = JsonConvert.SerializeObject(c);
+                Debug.WriteLine(jsonString.ToString());
+                recordCount++;
+            }
+
+
+            Debug.WriteLine("Activities Total record =" + recordCount.ToString());
+            TimeSpan time = sw.Elapsed;
+            Debug.WriteLine(time.ToString());
+        }
 
         public static void RunQueryExpressionXML333(OrganizationServiceProxy service)
         {

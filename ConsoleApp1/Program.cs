@@ -33,7 +33,13 @@ namespace LeadProcess
         //public const string id = "AFBA2387-B633-E711-80CB-005056A6C323";
         //public const string companyName = uiname="A AH ALSAHOO, FAHADs" 
         //accountID i Es test
-        public const string accountId = "406f4f52-e4de-e511-bd38-e41f13be0af4";
+        //public const string accountId = "406f4f52-e4de-e511-bd38-e41f13be0af4";
+
+        //account in France test
+        //public const string accountId = "21fc7471-b73f-e911-80ed-005056a67c5e";
+
+        // ONLY IN NO TEST
+        public const string accountId = "CF56E92C-C0C7-4B4A-A97D-09B050398B92";
 
         public static void Main(string[] args)
         {
@@ -54,7 +60,7 @@ namespace LeadProcess
             //}
 
             //Test enviroment
-            var country = "fr";
+            var country = "no";
             var service = new OrganizationServiceProxy(new Uri("https://" + $"intmscrmtst.sectoralarm.net/SectorAlarm{country}tst/XRMServices/2011/Organization.svc"), null, clientCredentials, null);
 
             //Here is service FOR PROD Norway
@@ -79,9 +85,9 @@ namespace LeadProcess
             //Guid id = CreateLeadWithSimpleinfor(service, companyName);
             //TODO : for setting in more
 
-            int loopnumber = 120;
+            int loopnumber = 720;
 
-            for (int i = 12001; i < loopnumber; i++)
+            for (int i = 501; i < loopnumber; i++)
             {
                 string descrip2 = "short description " + i;
                 Debug.WriteLine(descrip2);
@@ -109,7 +115,8 @@ namespace LeadProcess
             //ProgramFetchXMLPagingCookies.RunQueryExpression(service);
             //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
             //ProgramFetchXMLPagingCookies.RunQueryExpressionXML(service);
-            ProgramFetchXMLPagingCookies.Run(service);
+            //ProgramFetchXMLPagingCookies.Run(service);
+            ProgramFetchXMLPagingCookies.RunQueryExpressionFraAsgeir(service);
             //ProgramFetchXMLPagingCookies.RunQueryRobotics(service);
             // ProgramFetchXMLForTask.Run(service);
 
