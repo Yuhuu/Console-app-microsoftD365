@@ -8,3 +8,5 @@ Query the account you created earlier by using FetchXml.
 
 11.10.2019 create new file for fetch XML 
 ProgramFetchXMLForTask
+
+01.11.2019 Here is the example how to use queryEpression for the old fetch XML 
