@@ -1,4 +1,4 @@
-# Console-app-for-C-sharp
+# Console-app-Querying in CRM
 Query the account  created in CRM
 
 Qualify the lead and 
@@ -10,3 +10,5 @@ Query the account you created earlier by using FetchXml.
 ProgramFetchXMLForTask
 
 01.11.2019 Here is the example how to use queryEpression for the old fetch XML 
+
+17.11.2022 Here is the example how to queryEpression for Many to many relationship
