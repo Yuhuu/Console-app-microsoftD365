@@ -113,8 +113,72 @@ namespace LeadProcess
             createEntity["log_hardwareproductdefaultprice"] = new Money(Convert.ToDecimal(10.00));
             service.Create(createEntity);
         }
+             private static void AddProductWithTypeHardware(OrganizationServiceProxy service, Guid workorderID)
+        {
+            #region Add to old serviceCodes on activity template change, only add those which is not exist in the list
+
+                var Entity2IntersectAttribute = "log_workordersid";
+                var Entity1IntersectAttribute = "log_servicecodeid";
+                var SchemaName = "sa_log_servicecode_log_workorders";
+
+                var qServiceCodeLinkedToWorkorder = new QueryExpression("log_servicecode") { ColumnSet = new ColumnSet("log_name", "log_id", "log_skill") };
+                qServiceCodeLinkedToWorkorder.AddLink(SchemaName, Entity1IntersectAttribute, Entity1IntersectAttribute);
+                qServiceCodeLinkedToWorkorder.LinkEntities[0].EntityAlias = "RelationshipToDelete";
+                qServiceCodeLinkedToWorkorder.LinkEntities[0].Columns = new ColumnSet(Entity1IntersectAttribute, Entity2IntersectAttribute);
+                qServiceCodeLinkedToWorkorder.LinkEntities[0].AddLink("log_workorders", Entity2IntersectAttribute, Entity2IntersectAttribute);
+                qServiceCodeLinkedToWorkorder.LinkEntities[0].LinkEntities[0].EntityAlias = "RelatedWorkorders";
+                qServiceCodeLinkedToWorkorder.LinkEntities[0].LinkEntities[0].LinkCriteria.AddCondition("log_workordersid", ConditionOperator.Equal, retrieveWorkorder.Data.Id);
+
+                var getServiceCodeLinked = service.RetrieveMultiple(qServiceCodeLinkedToWorkorder);
+                if(getServiceCodeLinked.Error!=null) entityContext.ThrowFriendly($"Error when retrieving getServiceCodeLinked: '{getServiceCodeLinked.Error}'");
+
+                var Entity2IntersectAttribute2 = "sa_activitytemplateid";
+                var SchemaName2 = "sa_log_servicecode_sa_activitytemplate";
+
+                var qServiceCodeLinkedToWorkorderTemplate = new QueryExpression("log_servicecode") { ColumnSet = new ColumnSet("log_name", "log_id", "log_skill") };
+                qServiceCodeLinkedToWorkorderTemplate.AddLink(SchemaName2, Entity1IntersectAttribute, Entity1IntersectAttribute);
+                qServiceCodeLinkedToWorkorderTemplate.LinkEntities[0].EntityAlias = "RelationshipToDelete";
+                qServiceCodeLinkedToWorkorderTemplate.LinkEntities[0].Columns = new ColumnSet(Entity1IntersectAttribute, Entity2IntersectAttribute2);
+                qServiceCodeLinkedToWorkorderTemplate.LinkEntities[0].AddLink("sa_activitytemplate", Entity2IntersectAttribute2, Entity2IntersectAttribute2);
+                qServiceCodeLinkedToWorkorderTemplate.LinkEntities[0].LinkEntities[0].EntityAlias = "RelatedWorkorders";
+                qServiceCodeLinkedToWorkorderTemplate.LinkEntities[0].LinkEntities[0].LinkCriteria.AddCondition("sa_activitytemplateid", ConditionOperator.Equal, workorder.WorkOrderTemplate.Id);
+
+                var getServiceCodeLinked2 = service.RetrieveMultiple(qServiceCodeLinkedToWorkorderTemplate);
+                if (getServiceCodeLinked2.Error != null) entityContext.ThrowFriendly($"Error when retrieving qServiceCodeLinkedToWorkorderTemplate: '{getServiceCodeLinked2.Error}'");
+
+                string[] arrForgetServiceCodeLinkedWO = getServiceCodeLinked.Data
+                                 .Select(x => x.Id.ToString())
+                                 .ToArray();
+                string[] arrForAddingServiceCodeToWO = getServiceCodeLinked2.Data
+                                 .Select(x => x.Id.ToString())
+                                 .ToArray();
+                arrForAddingServiceCodeToWO = arrForAddingServiceCodeToWO.Except(arrForgetServiceCodeLinkedWO).ToArray();
+
+                //Convert the EntityCollection to a EntityReferenceCollection
+                var sCReferences = new EntityReferenceCollection();
+
+                arrForAddingServiceCodeToWO.ToList().ForEach(x => {
+                    sCReferences.Add(new EntityReference("log_servicecode", new Guid(x)));
+                });
+
+                // The contact to associate to the accounts
+                var log_workorders = new EntityReference("log_workorders",workorder.Id);
 
 
+                // Use AssociateRequest
+                AssociateRequest request = new AssociateRequest()
+                {
+                    Target = log_workorders,
+                    RelatedEntities = sCReferences,
+                    // The relationship to use
+                    Relationship = new Relationship(SchemaName)
+                };
+
+                var addLink = entityContext.OrganizationRequest(
+                    new OrganizationRequestTask(request, "addLink as template service code"));
+
+                #endregion
+       }
         private static void AddProductWithTypeContract(OrganizationServiceProxy service, Guid workorderID)
         {
             var createEntity = new Entity("log_workorderproduct");
